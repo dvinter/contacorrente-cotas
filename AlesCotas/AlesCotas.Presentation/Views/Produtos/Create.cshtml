@@ -1,0 +1,71 @@
+﻿@using AlesCotas.Application.Dto
+@using AlesCotas.Domain.Entities
+@using AlesCotas.Domain.Enum
+@using AlesCotas.Infra.CrossCutting.Utils.Extensions
+@model Produto
+@{
+    bool editMode = Model?.Id > 0;
+
+    ProdutoTipoDto produtoTipo = ViewBag.produtoTipo;
+    Model.TipoId = produtoTipo.Id;
+
+    ViewData["Title"] = (editMode ? "Editar" : "Novo") + " " +  produtoTipo?.Name ?? "Produto";
+}
+
+<section id="subitemcreate">
+    <div class="back-btn">
+        <button type="button" onclick="location.href='@Url.Action("Index", "Produtos", new { ProdutoTipoId=produtoTipo.Id })'"><img src="~/imgs/arrow.svg" alt="" srcset=""></button>
+        <h4>@ViewData["Title"]</h4>
+    </div>
+    <span class="line"></span>
+    <div class="box-form">
+        <div class="box-form-content">
+            <div class="col-one">
+                <form asp-action="Save">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" asp-for="Id" />
+                    <input type="hidden" asp-for="TipoId" />
+                    <div class="form-group mb-3 mt-4">
+                        <label asp-for="Name">Nome *</label>
+                        <input type="text" asp-for="Name" class="form-control" placeholder="Digite o nome do item">
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="inputEmail4">Unidade</label>
+                        <input asp-for="Unidade" type="text" class="form-control" placeholder="UN">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label asp-for="Valor">Valor (@(produtoTipo.HabilitaValoresDolar ?"US$":"R$" ))</label>
+                        <input asp-for="Valor" type="number" class="form-control" step="0.01"
+                               placeholder="Digite o valor">
+                              
+                        <span asp-validation-for="Valor" class="text-danger"></span>
+                    </div>
+                    <div class="form-group mb-4">
+                        <label for="inputEmail4">Descrição</label>
+                        <textarea placeholder="Adicione uma descrição" asp-for="Descricao" class="form-control" cols="30"
+                                  rows="5"></textarea>
+                        <span asp-validation-for="Descricao" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="form-group form-check">
+                        <label class="form-check-label">
+                            <input class="form-check-input" asp-for="Ativo" />@Html.DisplayNameFor(m => m.Ativo)
+                        </label>
+                    </div>
+                    <div class="btn-request-form pt-4">
+                        <button type="submit" class="btn btn-primary">@(editMode ? "Salvar" : "Cadastrar")</button>
+                        <button onclick="location.href='@Url.Action("Index", "Produtos", new { ProdutoTipoId=produtoTipo.Id })'" type="button" class="btn btn-primary btn-primary-outline">Voltar</button>
+                    </div>
+                </form>
+            </div>
+            <div class="col-two">
+                <img src="~/imgs/form-fuel.svg" alt="">
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+
+</script>

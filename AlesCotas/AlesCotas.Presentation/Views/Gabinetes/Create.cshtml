@@ -1,0 +1,57 @@
+﻿@using AlesCotas.Application.Dto
+@using AlesCotas.Domain.Entities
+
+@model Gabinete
+
+@{
+    bool editMode = Model?.Id > 0;
+    ViewData["Title"] = (editMode ? "Editar" : "Novo") + " Gabinete";
+    //List<ParlamentarDto> parlamentares = ViewBag.parlamentares;
+}
+
+<section class="edit-form">
+    <div class="back-btn">
+        <button type="button" onclick="location.href='@Url.Action("Index")'"><img src="~/imgs/arrow.svg" alt="" srcset=""></button>
+        <h4>@ViewData["Title"]</h4>
+    </div>
+    <span class="line"></span>
+
+    <div class="box-form">
+        <div class="box-form-content">
+            <div class="col-one">
+                <form asp-action="Save">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" asp-for="Id" />
+                    <div class="form-group mb-3">
+                        <label asp-for="Name" class="control-label">Nome</label>
+                        <input asp-for="Name" class="form-control" placeholder="Nome do Gabinete"/>
+                        @*<span asp-validation-for="Name" class="text-danger"></span>*@
+                    </div>
+                   @* <div class="form-group mb-3 col-12 col-md-12 col-lg-12">
+                        <label for="inputEmail4">Parlamentar</label>
+                        <select asp-for="ParlamentarId" class="form-select" aria-label="Gabinete">
+                            <option value="" selected>Selecione um Parlamentar</option>
+                            @foreach (var p in parlamentares.Where(x=>x.Ativo))
+                            {
+                                <option value="@p.Id">@p.Name</option>
+                            }
+                            @foreach (var p in parlamentares.Where(x => !x.Ativo))
+                            {
+                                <option value="@p.Id" disabled>@p.Name</option>
+                            }
+                        </select>
+                    </div>*@
+                    <div class="form-group form-check">
+                        <label class="form-check-label">
+                            <input class="form-check-input" asp-for="Ativo" /> @Html.DisplayNameFor(model => model.Ativo)
+                        </label>
+                    </div>
+                    <div class="btn-request-form pt-4">
+                        <button type="submit" class="btn btn-primary">@(editMode ? "Salvar" : "Cadastrar")</button>
+                        <button onclick="location.href='@Url.Action("Index")'" type="button" class="btn btn-primary btn-primary-outline">Voltar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,309 @@
+﻿@using AlesCotas.Application.Classes
+@using AlesCotas.Application.Dto
+@using AlesCotas.Domain.Entities
+@using AlesCotas.Domain.Enum
+@using AlesCotas.Infra.CrossCutting.Utils.Extensions
+@model ProdutoTipo
+@{
+    bool editMode = Model?.Id > 0;
+    ViewData["Title"] = (editMode ? "Editar" : "Novo") +  " Tipo de Produto";
+    var roles = Enum.GetValues(typeof(EUsuarioPerfil));
+    var tiposCampos = Enum.GetValues(typeof(ETipoCampo));
+    IEnumerable<SelectListItem> gestores = ViewBag.gestores;
+    var icons = ViewBag.icons;
+
+    foreach (int role in roles)
+    {
+        EUsuarioPerfil erole = (EUsuarioPerfil)role;
+        if (!Model.Usuarios.Any(x => x.Perfil.Equals(erole)))
+        {
+            Model.Usuarios.Add(new ProdutoTipoUsuarioPerfil
+                    {
+                        Perfil = erole,
+                        PermiteAprovar = erole == EUsuarioPerfil.Gestor,
+                        PermiteCancelar = (erole == EUsuarioPerfil.Gestor || erole == EUsuarioPerfil.Gabinete),
+                        PermiteExcluir = erole == EUsuarioPerfil.Gestor,
+                        PermiteSolicitar = erole == EUsuarioPerfil.Gabinete,
+                        PermiteAlterarAprovado = erole == EUsuarioPerfil.Administrador,
+                        PermiteRecusar = (erole == EUsuarioPerfil.Administrador || erole == EUsuarioPerfil.Gestor)
+                    });
+        }
+    }
+    int orderMax = Model.Campos.Any() ? Model.Campos.Select(x => x.Ordem).Max() : 0;
+    while (Model.Campos.Count(x=>String.IsNullOrWhiteSpace(x.Name)) <3)
+    {
+        Model.Campos.Add(new ProdutoTipoCampos() { Ordem = ++orderMax });
+    }
+    Model.Campos = Model.Campos.OrderBy(x => x.Ordem).ToList();
+
+    var tiposAlteracao = Enum.GetValues(typeof(ETipoAleracoes));
+
+    if (!editMode)
+    {
+        Model.Ativo = true;
+    }
+
+}
+
+<section class="edit-form">
+    <div class="back-btn">
+        <button type="button" onclick="location.href='@Url.Action("Index")'"><img src="~/imgs/arrow.svg" alt="" srcset=""></button>
+        <h4>@ViewData["Title"]</h4>
+    </div>
+    <span class="line"></span>
+    <div class="box-form">
+        <div class="box-form-content">
+            <div class="col-one">
+                <form asp-action="Save" >
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" asp-for="Id" />
+                    <div class="row">
+                        <div class="form-group mb-3 col-12 col-md-12 col-lg-12">
+                            <label for="">Nome</label>
+                            <input asp-for="Name" type="text" class="form-control" placeholder="Nome">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group mb-3 col-12 col-md-12 col-lg-12 w-100">
+                            <label for="">Gestores</label><br />
+
+                            <small class="text-muted">Selecione um ou mais gestores para o tipo de produto</small>
+
+
+                            <div class="w-100">
+                                <select asp-for="GestoresId" class="form-select chosen w-100" multiple aria-label="Gabinetes">
+                                   @* @foreach (var p in gabinetes)
+                                    {
+
+                                        <option id="@p.Id" value="@p.Id">@(p.Name + " " + p.SaldoDisponivel?.ToString("N2"))</option>
+
+                                    }*@
+                                    @foreach (var g in gestores.Where(x => !x.Disabled))
+                                    {
+                                        <option value="@g.Value">@g.Text</option>
+                                    }
+                                    @foreach (var g in gestores.Where(x => x.Disabled))
+                                    {
+                                        <option disabled value="@g.Value">@g.Text</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="GestoresId" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                       @* <div class="form-group mb-3 col-12 col-md-12 col-lg-6">
+                            <label >Gestor</label>*@
+                           @* @Html.DropDownListFor(x=>x.GestorId, gestores, new { @class="form-select" } )*@
+                            @*<select id="selectGestor" asp-for="GestorId" class="form-select" aria-label="Ícone" onchange="updateIcon(event)">
+                                @foreach (var g in gestores.Where(x=>x.Ativo))
+                                {
+                                    <option value="@g.Id">@g.Nome (@g.Matricula)</option>
+                                }
+                                @foreach (var g in gestores.Where(x=>!x.Ativo))
+                                {
+                                    <option disabled value="@g.Id">@g.Nome (@g.Matricula)</option>
+                                }
+                            </select>*@
+                        @*</div>*@
+                     
+                        @*<div class="form-group mb-3  col-4 col-md-3">
+                            <label for="">Máximo Parcelas</label>
+                            <input type="number" step="1" asp-for="NumeroParcelas" min="1" max="12" class="form-control" />
+                        </div>*@
+                        <div class="form-group mb-3  col-4 col-md-4">
+                            <label for="">Incremento de Quantidade</label>
+                            <input type="number" step="0.01" asp-for="IncrementoQuantidade" min="0.01" max="1" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group mb-3 col-12">
+                            <label for="">Ícone</label>
+                            <div class="container p-0 m-0">
+                                <div class="row">
+                                    <div class="col-10 col-md-10 col-lg-11 ">
+                                        <select id="selectIcon" asp-for="Icon" class="form-select" aria-label="Ícone" onchange="updateIcon(event)">
+                                            @foreach (string ic in icons)
+                                            {
+                                                <option value="@ic">@ic</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class=" col-2 col-md-2 col-lg-1 d-flex justify-content-center align-items-center">
+                                        <img id="iconPreview" style="max-height:35px; max-width:100%" src="@("/imgs/icons/"+ Model.Icon)" alt="">
+                                    </div>
+                                </div>
+                            </div>
+                            @* <label for="">Ícone</label>
+                            <input asp-for="Icon" type="text" class="form-control" placeholder="fuel">*@
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group mb-3 col-12 col-md-4">
+                            @Html.CheckBoxFor(m => m.Ativo)
+                            <label for="">Ativo</label>
+                        </div>
+                        <div class="form-group mb-3 col-12 col-md-4">
+                            @Html.CheckBoxFor(m => m.HabilitaAnexos)
+                            <label for="">Habilita Anexos</label>
+                        </div>
+                        <div class="form-group mb-3 col-12 col-md-4">
+                            @Html.CheckBoxFor(m => m.HabilitaValoresDolar)
+                            <label for="">Mostrar Valores em Dólar</label>
+                        </div>
+                       
+                        <div class="form-group mb-3 col-12 col-md-4">
+                            @Html.CheckBoxFor(m => m.ImprimirConferencia)
+                            <label for="">Imprimir Conferência</label>
+                        </div>
+
+                        <div class="form-group mb-3 col-12 col-md-4">
+                            @Html.CheckBoxFor(m => m.PermitirRecorrencia)
+                            <label for="">Permitir Recorrência</label>
+                        </div>
+
+                        <div class="form-group mb-3 col-12 col-md-4">
+                            @Html.CheckBoxFor(m => m.PermitirApenasUmItem)
+                            <label for="">Um Item por Solicitação</label>
+                        </div>
+                        <div class="form-group mb-3 col-12 col-md-4">
+                            @Html.CheckBoxFor(m => m.CalcularDiarias)
+                            <label for="">Calcular Diárias</label>
+                        </div>
+                    </div>
+                    <hr />
+                    <span class="session-title">Configurações</span>
+                    <div class="table-responsive">
+                        <table class="table table-borderless">
+                            <th>Perfil</th>
+                            <th>Solicitar</th>
+                            <th>Cancelar</th>
+                            <th>Aprovar</th>
+                            <th>Recusar</th>
+                            <th>Alterar Aprovados</th>
+                           @* <th>Excluir</th>*@
+                            <th>Modo Alteração</th>
+                            @for (int i = 0; i < Model.Usuarios.Count; i++)
+                            {
+                                <input hidden asp-for="@Model.Usuarios[i].Perfil" class="form-control">
+                                <input hidden asp-for="@Model.Usuarios[i].PermiteExcluir" class="form-control">
+                                <tr>
+                                    <td>@Model.Usuarios[i].Perfil.GetEnumDescription()</td>
+                                    <td>@Html.CheckBoxFor(m => m.Usuarios[i].PermiteSolicitar)</td>
+                                    <td>@Html.CheckBoxFor(m => m.Usuarios[i].PermiteCancelar)</td>
+                                    <td>@Html.CheckBoxFor(m => m.Usuarios[i].PermiteAprovar)</td>
+                                    <td>@Html.CheckBoxFor(m => m.Usuarios[i].PermiteRecusar)</td>
+                                    <td>@Html.CheckBoxFor(m => m.Usuarios[i].PermiteAlterarAprovado)</td>
+                                   @* <td>@Html.CheckBoxFor(m => m.Usuarios[i].PermiteExcluir)</td>*@
+                                    <td>
+                                        <select asp-for="@Model.Usuarios[i].TipoAlteracao" class="form-select" aria-label="Perfil do usuário">
+                                            @foreach (int tipo in tiposAlteracao)
+                                            {
+                                                <option value="@tipo"> @(((ETipoAleracoes)tipo).GetEnumDescription()) </option>
+                                            }
+                                        </select>
+                                    </td>
+                                </tr>
+                            }
+                            </table>
+        
+                        @*<div class="form-group mb-3 col-12 col-md-12 col-lg-4">
+                            <label for="">Setor de lotação *</label>
+                            <input asp-for="Setor" type="text" class="form-control " id="" placeholder="" readonly>
+                        </div>*@
+                    </div>
+                    <hr/>
+
+                    <div class="table-responsive">
+                        <span class="session-title">Campos</span>
+                        <table class="table table-borderless" id="table-campos">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Grupo</th>
+                                    <th>Ordem</th>
+                                    <th>Largura</th>
+                                    <th>Tipo</th>
+                                    <th>Opções</th>
+                                    <th>Posição</th>
+                                    <th>Obrigatório</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (int i = 0; i < Model.Campos.Count; i++)
+                                {
+                                    
+                                    <tr class="pt-2">
+                                        <input hidden asp-for="@Model.Campos[i].Id" class="form-control">
+                                        <td class="pe-1"><input asp-for="@Model.Campos[i].Name" type="text" class="form-control" placeholder="Nome do Campo"></td>
+                                        <td class="pe-1"><input asp-for="@Model.Campos[i].Grupo" type="text" class="form-control" placeholder="Grupo"></td>
+                                        <td class="pe-1"><input asp-for="@Model.Campos[i].Ordem" type="number" step="1" class="form-control" placeholder="1"></td>
+                                        <td class="pe-1">
+                                            <select asp-for="@Model.Campos[i].Largura" class="form-select" aria-label="Tipo do Campo">
+                                                 <option value="3">Pequeno</option>
+                                                 <option value="6">Médio</option>
+                                                <option value="12">Grande</option>
+                                            </select>
+                                        </td>
+                                        <td class="pe-1">
+                                            <select asp-for="@Model.Campos[i].TipoCampo" class="form-select" aria-label="Tipo do Campo">
+                                                @foreach (int tipo in tiposCampos)
+                                                {
+                                                    <option value="@tipo"> @(((ETipoCampo)tipo).GetEnumDescription()) </option>
+                                                }
+                                            </select>
+                                        </td>
+                                        <td class="pe-1"><input asp-for="@Model.Campos[i].Opcoes" type="text" class="form-control" placeholder="Opção1,Opção2"></td>
+                                        <td class="pe-1">
+                                            <select asp-for="@Model.Campos[i].Posicao" class="form-select" aria-label="Posição">
+                                                <option value="0">Cabeçalho</option>
+                                                <option value="1">Rodapé</option>
+                                            </select>
+                                        </td>
+                                        <td class="pe-1">@Html.CheckBoxFor(m => m.Campos[i].Obrigatorio)</td>
+                                       
+                                        
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    
+        
+                    <div class="btn-request-form pt-4">
+                        <button type="submit" class="btn btn-primary">@(editMode ? "Salvar" : "Cadastrar")</button>
+                        <button onclick="location.href='@Url.Action("Index")'" type="button" class="btn btn-primary btn-primary-outline">Voltar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+
+@section Scripts {
+<script>
+
+        $(document).ready(function () {
+
+
+
+            $(".chosen").chosen();
+
+            $("#Gabinetes").click(function () {
+                $(".chosen").chosen("destroy");
+                var chosenHtml = $("#Gabinetes").html();
+                $(".movecontainer").append(chosenHtml);
+                $(".chosen").chosen();
+
+            });
+        });
+
+
+    function updateIcon($event) {
+        document.getElementById("iconPreview").setAttribute("src", "/imgs/icons/" + event.srcElement.value);
+    }
+
+</script>
+}

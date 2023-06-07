@@ -1,0 +1,246 @@
+
+@import url('general.css');
+
+.section-box {
+  width: 100%;
+}
+
+.section-box h4 {
+  padding-bottom: 20px;
+}
+
+.section-box .box-cards {
+  padding-top: 22px;
+  width: 100%;
+}
+
+.section-box .box-cards .box-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 258px;
+  height: 258px;
+  background-color: white;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  margin-bottom: 32px;
+  cursor: pointer;
+  text-decoration: none;
+}
+.section-box .box-cards .box-card:hover {
+  background-color: var(--primary-color-ascent);
+  transition: all.3s;
+}
+.section-box .box-cards .box-card p {
+  font-size: 22px;
+}
+
+@media only screen and (max-width: 900px) {
+  .section-box .box-cards {
+    display: flex;
+    justify-content: center;
+  }
+}
+@media only screen and (max-width: 570px) {
+    .section-box .box-cards {
+      display: flex;
+      justify-content: center;
+      --bs-gutter-x: 0;
+    }
+  }
+
+.section-table {
+    width: 100%;
+}
+
+    .section-table .box-title {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+        .section-table .box-title .box-btn-to-edit {
+            margin-bottom: 20px
+        }
+
+    .section-table .box-form {
+        margin-top: 22px;
+        height: 100%;
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .section-table .box-form .box-form-content {
+            display: flex;
+            flex-direction: column;
+            padding: 56px;
+            background-color: white;
+            box-shadow: 0px 16px 32px rgba(124, 129, 152, 0.08);
+            border-radius: 8px;
+            position: relative;
+            width: 100%;
+        }
+
+            .section-table .box-form .box-form-content .box-content-title {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+                .section-table .box-form .box-form-content .box-content-title .box-text {
+                    display: flex;
+                    flex-direction: row;
+                    align-items: center;
+                }
+
+                    .section-table .box-form .box-form-content .box-content-title .box-text img {
+                        margin-right: 10px;
+                    }
+
+                .section-table .box-form .box-form-content .box-content-title .box-input-form {
+                    width: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                }
+
+                    .section-table .box-form .box-form-content .box-content-title .box-input-form .box-input {
+                        width: 100%;
+                        display: flex;
+                        flex-direction: row;
+                        align-items: center;
+                    }
+
+    .section-table .input-with-icon {
+        margin-right: 20px;
+    }
+
+    .section-table .box-form .box-form-content .footer-table {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+
+@media only screen and (max-width: 980px) {
+
+    .section-table .box-form .box-form-content {
+        padding: 15px;
+        width: 100%;
+    }
+}
+
+
+.homeIndex {
+    width: 100%;
+}
+
+    .homeIndex .box-title {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        margin-bottom: 20px;
+        width: 100%;
+    }
+
+        .homeIndex .box-title img {
+            margin-right: 10px;
+        }
+
+    .homeIndex .list-boxes .box-small {
+        height: 100%;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 22px;
+        background-color: white;
+        box-shadow: 0px 16px 32px rgba(124, 129, 152, 0.08);
+        border-radius: 8px;
+    }
+
+        .homeIndex .list-boxes .box-small .box-value-line {
+            display: flex;
+            flex-direction: column;
+        }
+
+            .homeIndex .list-boxes .box-small .box-value-line p {
+                font-size: 18px;
+                font-weight: 500;
+                margin-bottom: 5px;
+            }
+
+
+    .homeIndex .box-box {
+        margin: 22px 0;
+        height: 100%;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 22px;
+        background-color: white;
+        box-shadow: 0px 16px 32px rgba(124, 129, 152, 0.08);
+        border-radius: 8px;
+    }
+
+    .homeIndex .box-table {
+        width: 100%;
+    }
+
+        .homeIndex .box-table tr td {
+            min-width: 150px;
+        }
+
+            .homeIndex .box-table tr td p {
+                display: flex;
+                flex-direction: column;
+            }
+
+                .homeIndex .box-table tr td p #brmoney {
+                    font-size: 13px;
+                    color: var(--primary-color);
+                }
+
+            .homeIndex .box-table tr td:nth-child(1) {
+                min-width: 220px;
+            }
+
+                .homeIndex .box-table tr td:nth-child(1) p {
+                    min-width: 220px;
+                    font-size: 13px;
+                    display: flex;
+                    flex-direction: row;
+                }
+
+@media only screen and (max-width: 980px) {
+
+    .homeIndex .box-form .box-form-content {
+        padding: 15px;
+        width: 100%;
+    }
+}
+.btn_extrato_container button {
+    transition: transform .3s;
+    border: none;
+    background: none;
+}
+
+
+.btn_extrato_container button :hover {
+    transform: scale(1.1);
+}
+.btn_extrato {
+    align-self: flex-end;
+}

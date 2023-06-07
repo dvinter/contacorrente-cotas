@@ -1,0 +1,310 @@
+﻿@using AlesCotas.Application.Dto
+@using AlesCotas.Application.Filter
+@using AlesCotas.Application.Model
+@using AlesCotas.Domain.Entities;
+@using AlesCotas.Domain.Enum
+@using System.Globalization
+
+@model DashBoardViewModel
+@{
+    Usuario user = ViewBag.user;
+    CultureInfo ptBr = new CultureInfo("pt-BR");
+    ViewData["Title"] = "Dashboard";
+    IEnumerable<GabineteDto> gabinetes = ViewBag.gabinetes;
+    IEnumerable<ProdutoTipoDto> produtoTipos = ViewBag.produtoTipos;
+    DashBoardFilter filtro = ViewBag.Filter;
+    GabineteDto gabineteAtual = null;
+    if (gabinetes.Count() == 1)
+    {
+        gabineteAtual = gabinetes.FirstOrDefault();
+        filtro.GabineteId = gabineteAtual.Id;
+    }
+}
+<script src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+
+    
+    const model = @Html.Raw(Json.Serialize(Model));
+
+    console.log(model);
+
+
+    google.charts.load('current', {
+        'packages': ['corechart'], 'language': 'pt' });
+    google.charts.setOnLoadCallback(drawChart);
+
+    function drawChart() {
+        //var arraydados = [
+        //    ['Mês', 'Cota','Despesas','Pendente','Saldo'],
+        //    ['Jan', 1542,542,500,500],
+        //    ['Fev', 1170, 1000, 500, 100],
+        //    ['Mar', 660,1000,500,100],
+        //    ['Abr', 1030,1000,500,100],
+        //    ['Maio', -1000,1000,500,100],
+        //    ['Jun', 1170,1000,500,100],
+        //    ['Jul', 1170, 1, 1, 9],
+        //    ['Ago', 660,1000,500,100],
+        //    ['Set', 1030,1000,500,100],
+        //    ['Out', 1000,1000,500,100],
+        //    ['Nov', 1170,1000,500,100],
+        //    ["Dez", 21.45, 1, 1, 9]
+        //];
+
+
+        var data = google.visualization.arrayToDataTable(model.chartData);
+
+        var options = 
+        {
+            legend: { position: "right" },
+            colors: ['#0B495E', '#32DE8A', '#FF2E00', '#FEA82F', '#156d9e'],
+            vAxis: { title: 'Total em R$', format: 'currency' },
+            hAxis: { title: 'Mês' },
+            seriesType: 'bars',
+            series: { 4: { type: 'line' } }
+        };
+       
+        //verde,vermelho,azul
+        //var chart = new google.charts.Bar(document.getElementById('columnchart_material'));
+
+        //chart.draw(data, google.charts.Bar.convertOptions(options));
+
+        var chart = new google.visualization.ComboChart(document.getElementById('columnchart_material'));
+        chart.draw(data, options);
+
+
+    }
+</script>
+<section class="homeIndex">
+    <div class="box-title">
+        @if(gabineteAtual != null)
+        {
+            <h4>Dashboard - @gabineteAtual.Name</h4>
+        }
+        else
+        {
+            <h4>Dashboard</h4>
+        }
+    </div>
+    <span class="line"></span>
+    <div class="box-box">
+        <form class="w-100 ">
+            <div class="row align-items-end">
+                <!--Filtro de gabinete só quando for admin-->
+                @if (gabinetes.Count() > 1)
+                {
+                    <div class="form-group mb-3 col-12 col-md-3 col-lg-3">
+                        <label for="inputEmail4">Gabinete *</label>
+                        <select class="form-select" name="GabineteId" asp-for="@filtro.GabineteId" aria-label="Default select example">
+                            @{
+                                <option value="" selected>Todos</option>
+                                foreach (var gabinete in gabinetes)
+                                {
+                                    <option value="@gabinete.Id">@gabinete.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                }
+                else
+                {
+                    <input type="hidden" class="form-control" asp-for="@filtro.GabineteId" name="GabineteId">
+                }
+                <div class="form-group mb-3 col-12 col-md-3 col-lg-3">
+                    <label for="inputEmail4">Tipo de Produtos</label>
+                    <select class="form-select" name="ProdutoTipoId" asp-for="@filtro.ProdutoTipoId" aria-label="Default select example">
+                        @{
+                               <option value="0">Todos</option>
+                                foreach (var tipo in produtoTipos)
+                                {
+                                    <option value="@tipo.Id">@tipo.Name</option>
+                                }
+                         }
+                    </select>
+                </div>
+                 <div class="form-group mb-3 col-12 col-md-2 col-lg-2">
+                    <label for="inputEmail4">De </label>
+                    <input type="month" class="form-control" asp-for="@filtro.DataInicio" name="DataInicio">
+                </div>
+                <div class="form-group mb-3 col-12 col-md-2 col-lg-2">
+                    <label for="inputEmail4">Até </label>
+                    <input type="month" class="form-control" asp-for="@filtro.DataFim" name="DataFim">
+                </div>
+                <div class="col-12 col-md-12 col-lg-2 mb-3">
+                    <button class="btn btn-primary w-100">Buscar</button>
+                </div>
+            </div>
+           @* <div class="row align-items-end">
+                <div class="form-group mb-3 col-12 col-md-12 col-lg-6">
+                    <label for="inputEmail4">Tipo de solicitação *</label>
+                    <select class="form-select" aria-label="Default select example">
+                        <option value="" selected>Selecione o tipo de solicitação </option>
+                        <option value="1">Gestor</option>
+                        <option value="2">Administrador</option>
+                    </select>
+                </div>
+               
+            </div>*@
+
+        </form>
+    </div>
+    <div class="list-boxes row gy-3 justify-content-center">
+        <div class="col-12 col-sm-6 col-md-4 col-lg-4 col-xl-3 ">
+            <div class="box-small">
+                <div class="box-title">
+                    <img src="~/imgs/total-gasto-icon.svg" alt="">
+                    <h6>Total Solicitado</h6>
+                </div>
+                <div class="w-100 box-value-line">
+                    <p class="text-self-end">@Model.TotalSolicitado.ToString("C2",ptBr)</p>
+                    <span class="line-primary"></span>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-md-4 col-lg-4 col-xl-3 ">
+            <div class="box-small">
+                <div class="box-title">
+                    <img src="~/imgs/andamento-icon.svg" alt="">
+                    <h6>Pendente</h6>
+                </div>
+                <div class="w-100 box-value-line">
+                    <p class="text-self-end">@(Model.TotalSolicitacoesStatus.FirstOrDefault(x => x.Status == ESolicitacaoStatus.Pendente)?.Total.ToString("C2", ptBr) ?? "--")</p>
+                    <span class="line-andamento"></span>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-md-4 col-lg-4 col-xl-3 ">
+            <div class="box-small">
+                <div class="box-title">
+                    <img src="~/imgs/aprovado-icon.svg" alt="">
+                    <h6>Aprovado</h6>
+                </div>
+                <div class="w-100 box-value-line">
+                    <p class="text-self-end">@(Model.TotalSolicitacoesStatus.FirstOrDefault(x => x.Status == ESolicitacaoStatus.Aprovado)?.Total.ToString("C2", ptBr) ?? "--")</p>
+                    <span class="line-concluido"></span>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-md-4 col-lg-4 col-xl-3 ">
+            <div class="box-small">
+                <div class="box-title">
+                    <img src="~/imgs/cancelado-icon.svg" alt="">
+                    <h6>Recusado</h6>
+                </div>
+                <div class="w-100 box-value-line">
+                    <p class="text-self-end">@(Model.TotalSolicitacoesStatus.FirstOrDefault(x => x.Status == ESolicitacaoStatus.Recusada)?.Total.ToString("C2", ptBr) ?? "--")</p>
+                    <span class="line-cancelado"></span>
+                </div>
+            </div>
+        </div>
+        @if (user.Role != EUsuarioPerfil.Gestor && user.Role != EUsuarioPerfil.Consulta)
+        {
+            <!--Não aparecer para gestor-->
+            <div class="col-12 col-sm-6 col-md-4 col-lg-4 col-xl-3 ">
+                <div class="box-small">
+                    <div class="box-title">
+                        <img src="~/imgs/saldo-icon.svg" alt="">
+                        <h6>Créditos</h6>
+                    </div>
+                    <div class="w-100 box-value-line">
+                        <p class="text-self-end">@Model.TotalCreditos.ToString("C2", ptBr)</p>
+                        <span class="line-concluido"></span>
+                    </div>
+                </div>
+            </div>
+            <!--Não aparecer para gestor-->
+            <div class="col-12 col-sm-6 col-md-4 col-lg-4 col-xl-3 ">
+                <div class="box-small">
+                    <div class="box-title">
+                        <img src="~/imgs/cancelado-icon.svg" alt="">
+                        <h6>Débitos</h6>
+                    </div>
+                    <div class="w-100 box-value-line">
+                        <p class="text-self-end">@Model.TotalDebitos.ToString("C2", ptBr)</p>
+                        <span class="line-cancelado"></span>
+                    </div>
+                </div>
+            </div>
+            <!--Não aparecer para gestor-->
+            <div class="col-12 col-sm-6 col-md-4 col-lg-4 col-xl-3 ">
+                <div class="box-small">
+                    <div class="box-title">
+                        <img src="~/imgs/total-gasto-icon.svg" alt="">
+                        <h6>Saldo</h6>
+                    </div>
+                    <div class="w-100 box-value-line">
+                        <p class="text-self-end">@Model.TotalSaldos.ToString("C2", ptBr)</p>
+                        <span class="line-primary"></span>
+                    </div>
+                </div>
+            </div>
+            <!--Não aparecer para gestor-->
+            <div class="col-12 col-sm-6 col-md-4 col-lg-4 col-xl-3 ">
+                <div class="box-small">
+                <div class="box-title">
+                    <img src="~/imgs/total-gasto-icon.svg" alt="">
+                    <h6>Total Disponível</h6>
+                </div>
+                <div class="w-100 box-value-line">
+                    <p class="text-self-end">@Model.TotalDisponivel.ToString("C2", ptBr)</p>
+                    <span class="line-primary"></span>
+                </div>
+            </div>
+        </div>
+        }
+    </div>
+        @if (user.Role != EUsuarioPerfil.Gestor && user.Role != EUsuarioPerfil.Consulta)
+        {
+        <div class="box-box w-100">
+            <div class="box-title">
+                <img src="~/imgs/total-gasto-icon.svg" alt="">
+                <h4>Consumo detalhado</h4>
+            </div>
+            <div class="box-dash w-100">
+                <div id="columnchart_material" style="width: 100%; height: 500px;"></div>
+            </div>
+        </div>
+        }
+    <div class="box-box">
+        <div class="box-title">
+            <img src="~/imgs/box-icon.svg" alt="">
+            <h4>Últimas solicitações</h4>
+        </div>
+        <div class="box-table">
+            <div style="margin-bottom: 1rem;" class="table-responsive">
+                <table class="table table-striped  table-hove align-middle ">
+                    <thead>
+                        <tr>
+                            <th scope="col">N: da solicitação</th>
+                            <th scope="col">Gabinete</th>
+                            <th scope="col">Tipo de solicitação</th>
+                            <th scope="col">Valor</th>
+                            <th scope="col">Data da solicitação</th>
+                            <th scope="col">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach(var sol in Model.UltimasSolicitacoes)
+                        {<tr>
+                            <td>@sol.Numero</td>
+                            <td>@sol.GabineteDescricao</td>
+                            <td>@sol.ProdutoTipoDescricao</td>
+                            @if(sol.HabilitaValoresDolar)
+                            {
+                                    <td>US$ @sol.TotalDolar?.ToString("N2", ptBr)</td>
+                            }
+                            else
+                            {
+                                    <td>@sol.TotalSolicitado.ToString("C2", ptBr)</td>
+                            }
+                            
+                            <td>@sol.DataSolicitacao.ToString("dd/MM/yyyy")</td>
+                                <td style="width:150px ;"><span class="@(sol.StatusAtual.Status == ESolicitacaoStatus.Aprovado ? "concluido" : sol.StatusAtual.Status == ESolicitacaoStatus.Recusada ? "cancelado" : "andamento" )">@sol.StatusAtual.StatusDescricao</span></td>
+                        </tr>
+                        }
+                       
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>

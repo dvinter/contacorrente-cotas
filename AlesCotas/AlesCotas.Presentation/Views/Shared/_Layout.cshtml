@@ -1,0 +1,201 @@
+﻿@using AlesCotas.Domain.Entities
+@using AlesCotas.Domain.Enum
+@using Microsoft.AspNetCore.Identity
+
+@inject SignInManager<Usuario> SignInManager
+@inject UserManager<Usuario> UserManager
+
+@{
+   
+    ToastModel toast = ViewBag.toast ?? new ToastModel();
+
+    }
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ALES Cotas</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/shared/layout.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/AlesCotas.Presentation.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/shared/chosen.css" />
+</head>
+<body>
+    @*    <header>
+    <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+    <div class="container-fluid">
+    <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">AlesCotas.Presentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+    aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+    <ul class="navbar-nav flex-grow-1">
+    <li class="nav-item">
+    <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+    </li>
+    <li class="nav-item">
+    <a class="nav-link text-dark" asp-area="" asp-controller="Gabinetes" asp-action="Index">Gabinetes</a>
+    </li>
+    <li class="nav-item">
+    <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    </li>
+    </ul>
+    <partial name="_LoginPartial" />
+    </div>
+    </div>
+    </nav>
+    </header>*@
+
+    <input type="hidden" id="success" value="@TempData["success"]" />
+    <input type="hidden" id="info" value="@TempData["info"]" />
+    <input type="hidden" id="warning" value="@TempData["warning"]" />
+    <input type="hidden" id="error" value="@TempData["error"]" />
+
+    <div class="general" id="sidebar">
+        <div class="box-mobile shadow no-print">
+            <span onclick="sidebarNone()">
+                <img src="~/imgs/hamburgue.svg" alt="">
+            </span>
+        </div>
+
+
+
+        <div class="sidebar shadow no-print">
+            <div class="title-sidebar">
+                <img src="~/imgs/logo.svg" alt="">
+            </div>
+            <hr>
+            @if (SignInManager.IsSignedIn(User))
+            {
+                var user = await UserManager.GetUserAsync(User);
+                @if (user != null)
+                {
+                    var roles = (await UserManager.GetRolesAsync(user)).Select(x => Enum.Parse(typeof(EUsuarioPerfil), x)).OrderBy(x => x).Cast<EUsuarioPerfil>();
+                    <h6>Menu</h6>
+                    <div class="box-sidebar">
+                        <ul class="">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">
+                            <li class="@(ViewContext.RouteData.Values["Controller"]?.ToString()=="Dashboard" ? "active":"")">
+                                <img src="~/imgs/side-dash.svg" alt="">Dashboard
+                            </li></a>
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Solicitacoes" asp-action="SelectTipos">
+                            <li class="@(ViewContext.RouteData.Values["Controller"]?.ToString()=="Solicitacoes"  || ViewContext.RouteData.Values["Action"]?.ToString()=="Fuel"  ? "active":"")">
+                                <img src="~/imgs/side-request.svg" alt="">Solicitações
+                            </li></a>
+                          @*  <a class="nav-link text-dark" asp-area="" asp-controller="Admin" asp-action="Index">
+                            <li class="@(ViewContext.RouteData.Values["Controller"]?.ToString()=="History" ? "active":"")">
+                                <img src="~/imgs/side-history.svg" alt=""> Histórico
+                            </li></a>*@
+                            @*<a class="nav-link text-dark" asp-area="" asp-controller="Admin" asp-action="Index">
+                            <li class="@(ViewContext.RouteData.Values["Controller"]?.ToString()=="Balance" ? "active":"")">
+                                <img src="~/imgs/saldo-icon.svg" alt="">Saldo
+                            </li></a>*@
+                            @if (roles?.Any(x => x.Equals(EUsuarioPerfil.Administrador) || x.Equals(EUsuarioPerfil.Gabinete)) ?? false)
+                             {
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Extrato" asp-action="Index">
+                            <li class="@(ViewContext.RouteData.Values["Controller"]?.ToString()=="Extrato" ? "active":"")">
+                                <img src="~/imgs/side-extract.svg" alt="">Extrato
+                            </li></a>
+                             }
+                            @if (roles?.Any(x => x.Equals(EUsuarioPerfil.Administrador) || x.Equals(EUsuarioPerfil.Consulta)) ?? false)
+                            {
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Publicacoes" asp-action="Index">
+                                <li class="@(ViewContext.RouteData.Values["Controller"]?.ToString()=="Publicacoes" ? "active":"")">
+                                    <img src="~/imgs/side-publicacao.svg" alt="">Publicações
+                                </li>
+                                </a>
+                            }
+                            @if (roles?.Any(x => x.Equals(EUsuarioPerfil.Administrador)) ?? false)
+                            {
+                                <hr class="w-100">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Admin" asp-action="Index">
+                                <li
+                        class="@(ViewContext.RouteData.Values["Controller"]?.ToString()=="Admin" ? "active":"")">
+                                    <img src="~/imgs/config.svg" alt="">Configurações
+                                </li>
+                                </a>
+                            }
+
+                            <hr class="w-100">
+                            @*Identity/Account/Manage/ChangePassword*@
+                            @if (user.UserName.ToLower() == "admin")
+                            {
+                                <li onclick="location.href='/Identity/Account/Manage/ChangePassword'"
+                                class="@(ViewContext.RouteData.Values["Controller"]?.ToString()=="ChangePassword" ? "active":"")">
+                                    <img src="~/imgs/senha-icon.svg" alt="">Alterar senha
+                                </li>
+                            }
+                            <partial name="_LoginPartial" />
+                        </ul>
+                    </div>
+                }
+                else
+                {
+                    await SignInManager.SignOutAsync();
+
+                }
+            }
+        </div>
+
+
+        <div class="content">
+            <div class="container-fluid">
+                <main role="main" class="pb-3">
+                    @RenderBody()
+                </main>
+            </div>
+        </div>
+    </div>
+
+    @*    <footer class="border-top footer text-muted">
+    <div class="container">
+    &copy; 2023 - AlesCotas.Presentation - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    </div>
+    </footer>*@
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery/dist/jquery.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/vanilla-masker.min.js"></script>
+    <script src="~/js/toastr.min.js"></script>
+    <script src="~/js/sweetalert2.min.js"></script>
+    <script src="~/js/masks.js"></script>
+    <script src="~/js/chosen.jquery.js"></script>
+    <script src="~/js/cotacao-ajax.js"></script>
+
+@*    <script src="~/jquery/jquery.js"></script>
+    <script src="~/jquery/jquery.min.js"></script>
+    <script src="~/jquery/jquery.slim.js"></script>
+    <script src="~/jquery/jquery.slim.min.js"></script>
+*@    
+    @*<a href="~/jquery/jquery.min.map">~/jquery/jquery.min.map</a>
+    <a href="~/jquery/jquery.slim.min.map">~/jquery/jquery.slim.min.map</a>*@
+
+
+    @await RenderSectionAsync("Scripts", required: false)
+
+
+    <script>
+
+        const toast =  @Html.Raw(Json.Serialize(toast));;
+
+        if (toast.info)
+        {
+            infoSwal(toast.info);
+        }
+        if (toast.error)
+        {
+            errorSwal(toast.error.replace("\n","<br/>"));
+        }
+        if (toast.success) 
+        {
+            successSwal(toast.success);
+        }
+
+        </script>
+
+</body>
+</html>

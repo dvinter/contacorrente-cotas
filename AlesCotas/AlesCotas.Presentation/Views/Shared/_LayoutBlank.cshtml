@@ -1,0 +1,56 @@
+﻿@using AlesCotas.Domain.Entities
+@using AlesCotas.Domain.Enum
+@using Microsoft.AspNetCore.Identity
+
+@inject SignInManager<Usuario> SignInManager
+@inject UserManager<Usuario> UserManager
+
+
+    @{
+
+    ToastModel toast = ViewBag.toast ?? new ToastModel();
+
+    }
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ALES Cotas</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/shared/layout.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/AlesCotas.Presentation.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/shared/chosen.css" />
+    <link rel="stylesheet" href="~/css/print.css" asp-append-version="true" />
+</head>
+<body>
+
+    <div class="container-fluid">
+        <div class="d-flex justify-content-center align-items-center print-header">
+            <div class="col-12 d-flex justify-content-center align-items-center ">
+                <img style="max-width:300px; max-height:81px" src="~/imgs/logo-grande.png" class="me-4" alt="Assembléia Legislativa Espírito Santo">
+                <img style="max-width:300px" src="~/imgs/ALES.png" class=" " alt="Assembléia Legislativa Espírito Santo">
+            </div>
+          
+            
+
+        </div>
+        <div class="row print-body">
+            @RenderBody()
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery/dist/jquery.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/vanilla-masker.min.js"></script>
+    <script src="~/js/toastr.min.js"></script>
+    <script src="~/js/sweetalert2.min.js"></script>
+    <script src="~/js/masks.js"></script>
+    <script src="~/js/chosen.jquery.js"></script>
+
+</body>
+@await RenderSectionAsync("Scripts", required: false)
+</html>

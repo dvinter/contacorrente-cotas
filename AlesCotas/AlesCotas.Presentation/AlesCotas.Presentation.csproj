@@ -1,0 +1,51 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>aspnet-AlesCotas.Presentation-981FD2DF-4A65-4C71-B6D6-4850E9076592</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Views\Parlamentar\**" />
+    <Compile Remove="wwwroot\css\users\**" />
+    <Content Remove="Views\Parlamentar\**" />
+    <Content Remove="wwwroot\css\users\**" />
+    <EmbeddedResource Remove="Views\Parlamentar\**" />
+    <EmbeddedResource Remove="wwwroot\css\users\**" />
+    <None Remove="Views\Parlamentar\**" />
+    <None Remove="wwwroot\css\users\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="12.0.1" />
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.0" />
+    <PackageReference Include="bootstrap-tokenfield" Version="0.12.1" />
+    <PackageReference Include="bootstrap.chosen" Version="1.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="6.0.13" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="6.0.13" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="6.0.13" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.13" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.13" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.11" />
+    <PackageReference Include="toastr" Version="2.1.1" />
+    <PackageReference Include="Twitter.Typeahead" Version="0.11.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AlesCotas.Application\AlesCotas.Application.csproj" />
+    <ProjectReference Include="..\AlesCotas.Domain\AlesCotas.Domain.csproj" />
+    <ProjectReference Include="..\AlesCotas.Infra.CrossCutting.Utils\AlesCotas.Infra.CrossCutting.Utils.csproj" />
+    <ProjectReference Include="..\AlesCotas.Infra.Data\AlesCotas.Infra.Data.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\imgs\icons\" />
+  </ItemGroup>
+
+  <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>
+
+</Project>

@@ -1,0 +1,44 @@
+﻿@page
+@model LoginModel
+
+@{
+    Layout = "~/Views/Shared/Auth.cshtml";
+    ViewData["Title"] = "Entrar";
+
+}
+
+<div class="col-form">
+    <div class="box-title-col-form pb-2">
+        <h3 class="pb-2">Realize seu Login</h3>
+        <p>Acesse o sistema de cotas parlamentar da ALES para gerenciar seu saldo</p>
+    </div>
+    <div class="box-col-form-inner">
+        <form id="account" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group input-login">
+                <label>N° Matrícula</label>
+                <input asp-for="Input.UserName" class="form-control" placeholder="Digite o número de matrícula" aria-required="true" />
+                <img src="~/imgs/login-user.svg" alt="">
+                <span asp-validation-for="Input.UserName" class="text-danger"></span>
+            </div>
+            <div class="form-group input-login">
+                <label>Senha</label>
+                <input asp-for="Input.Password" placeholder="Digite sua senha" class="form-control" aria-required="true" />
+                <img src="~/imgs/login-pass.svg" alt="">
+                <span asp-validation-for="Input.Password" class="text-danger"></span>
+            </div>
+
+            <div class="box-btn">
+                <button type="submit" class="btn btn-primary">Entrar no sistema </button>
+            </div>
+            <div class="box-forgot">
+                <a id="forgot-password" asp-page="./ForgotPassword">Esqueci minha senha</a>
+            </div>
+        </form>
+
+    </div>
+</div>
+@*
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}*@

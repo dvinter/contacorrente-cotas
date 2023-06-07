@@ -1,0 +1,144 @@
+﻿@using AlesCotas.Application.Dto
+@using AlesCotas.Domain.Entities
+
+@model Publicacao
+
+@{
+    bool editMode = Model?.Id > 0;
+    if (!editMode)
+        Model.Ativo = true;
+    if (Model.MesReferencia == DateTime.MinValue)
+        Model.MesReferencia = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddMonths(-1);
+
+    ViewData["Title"] = (editMode ? "Editar" : "Nova") + " Publicação";
+
+    List<GabineteDto> gabientes = ViewBag.gabinetes;
+
+    //List<ParlamentarDto> parlamentares = ViewBag.parlamentares;
+}
+
+<section class="edit-form">
+    <div class="back-btn">
+        <button type="button" onclick="location.href='@Url.Action("Index")'"><img src="~/imgs/arrow.svg" alt="" srcset=""></button>
+        <h4>@ViewData["Title"]</h4>
+    </div>
+    <span class="line"></span>
+
+    <div class="box-form">
+        <div class="box-form-content">
+            <div class="col-one">
+                <form asp-action="Save">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" asp-for="Id" />
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="form-group mb-3 col-12 col-md-6">
+                                <label>Gabinete</label>
+                                <select asp-for="GabineteId" id="selectGabinete" class="form-select" aria-label="MovimentoConta" onchange="onSelectChange()">
+                                    <option value="" selected>Selecione um Gabinete</option>
+                                    @foreach (var p in gabientes.Where(x => x.Ativo))
+                                    {
+                                        <option value="@p.Id">@p.Name @(p.SaldoDisponivel?.ToString("N2"))</option>
+                                    }
+                                    @foreach (var p in gabientes.Where(x => !x.Ativo))
+                                    {
+                                        <option value="@p.Id" disabled>@p.Name</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="GabineteId" class="text-danger"></span>
+                            </div>
+                            <div class="form-group mb-3 col-12 col-md-6">
+                                <label asp-for="MesReferencia" class="control-label">Mês Referência</label>
+                                <input id="mesPublicacao" type="month" asp-for="MesReferencia" class="form-control" max="@DateTime.Now.AddMonths(-1).ToString("yyyy-MM")" onchange="onSelectChange()" />
+                                <span asp-validation-for="MesReferencia" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group mb-3 col-12">
+                                <label asp-for="Descricao" class="control-label">Descrição</label>
+                                <textarea id="descricaoPublicacao" asp-for="Descricao" class="form-control" placeholder="" style="min-height:200px"></textarea>
+                                <span asp-validation-for="Descricao" class="text-danger"></span>
+                                <button type="button" class="btn btn-primary" onclick="getResumoGabinete()">Gerar Texto</button>
+                                <br/>
+                                <span class="text-danger" id="txsolicitacoespendentes"></span>
+                            </div>
+                            
+                        </div>
+                        <div class="form-group form-check">
+                            <label class="form-check-label">
+                                <input class="form-check-input" asp-for="Ativo" /> @Html.DisplayNameFor(model => model.Ativo)
+                            </label>
+                        </div>
+                        
+                        <div class="btn-request-form pt-4">
+                            <button type="submit" class="btn btn-primary">@(editMode ? "Salvar" : "Cadastrar")</button>
+                            <button onclick="location.href='@Url.Action("Index")'" type="button" class="btn btn-primary btn-primary-outline">Voltar</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+
+@section Scripts {
+    <script>
+
+        $(document).ready(function () {
+            GetSolicitacoes();
+        });
+
+        function onSelectChange() {
+            $("#descricaoPublicacao").val('');
+            GetSolicitacoes();
+        }
+
+        function getResumoGabinete() {
+
+            const gabinete = $("#selectGabinete").val();
+            const mes = $("#mesPublicacao").val();
+            const xurl = "GetResumoGabinete?gabinete=" + gabinete + "&mes=" + mes;
+           
+            $.ajax({
+                type: 'GET',
+                url: xurl,
+                contentType: false,
+                processData: false,
+                success: function (result) {
+                    $("#descricaoPublicacao").val(result);
+                },
+                error: function (data) {
+                    $("#descricaoPublicacao").val('');
+                    console.error(data);
+                    //errorSwal("Erro ao processar cotas: " + data.responseText);
+                }
+            });
+        }
+
+        function GetSolicitacoes() {
+
+            const gabinete = $("#selectGabinete").val();
+            const mes = $("#mesPublicacao").val();
+            const xurl = "GetSolicitacoes?gabinete=" + gabinete + "&mes=" + mes;
+
+            $.ajax({
+                type: 'GET',
+                url: xurl,
+                contentType: false,
+                processData: false,
+                success: function (result) {
+                    $("#txsolicitacoespendentes").html(result);
+                },
+                error: function (data) {
+                    $("#txsolicitacoespendentes").html('');
+                    console.error(data);
+                    //errorSwal("Erro ao processar cotas: " + data.responseText);
+                }
+            });
+
+
+        }
+    </script>
+}

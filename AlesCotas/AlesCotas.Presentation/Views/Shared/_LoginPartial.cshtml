@@ -1,0 +1,47 @@
+﻿@using AlesCotas.Domain.Entities
+@using AlesCotas.Domain.Enum
+@using Microsoft.AspNetCore.Identity
+@using AlesCotas.Infra.CrossCutting.Utils.Extensions;
+
+@inject SignInManager<Usuario> SignInManager
+@inject UserManager<Usuario> UserManager
+
+<ul class="navbar-nav">
+    @if (SignInManager.IsSignedIn(User))
+    {
+
+        var user = await UserManager.GetUserAsync(User);
+        var roles = (await UserManager.GetRolesAsync(user)).Select(x => Enum.Parse(typeof(EUsuarioPerfil), x)).OrderBy(x => x).Cast<EUsuarioPerfil>();
+
+        <li class="logout w-100">
+            <form id="logoutForm" class="form-inline w-100" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                <button id="logout" class="w-100" type="submit"><img src="~/imgs/sair-icon.svg" alt="">Sair</button>
+            </form>
+        </li>
+        <div class="sidebar-footer d-flex  align-content-center mt-2 justify-content-start">
+            <div class="avatar">
+                <p>@user.Nome?.ToUpper().Substring(0,2)</p>
+            </div>
+            <div class="box-text-footer d-flex align-content-center">
+                <div class="d-flex flex-column justify-content-start">
+                    <h5 class="text-truncate" style="max-width: 150px;">
+                        @user.Nome
+                    </h5>
+                    <small class="text-truncate text-muted" style="max-width: 150px;">
+                        @roles?.FirstOrDefault().GetEnumDescription()
+                    </small>
+                </div>
+            </div>
+        </div>
+
+    }
+    else
+    {
+        @*<li class="nav-item">
+    <a class="nav-link text-dark" id="register" asp-area="Identity" asp-page="/Account/Register">Novo Usuário</a>
+    </li>
+    <li class="nav-item">
+    <a class="nav-link text-dark" id="login" asp-area="Identity" asp-page="/Account/Login">Entrar</a>
+    </li>*@
+    }
+</ul>

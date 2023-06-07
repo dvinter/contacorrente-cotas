@@ -1,0 +1,73 @@
+﻿@{
+    ViewData["Title"] = "Configurações";
+}
+<section class="section-box">
+    <h4>@ViewData["Title"]</h4>
+    <span class="line"></span>
+    <div class="box-cards row row-cols-auto ">
+        <div class="col">
+            <a class="nav-link text-dark" asp-area="" asp-controller="Cotas" asp-action="Index">
+                <div class="box-card">
+                    <img src="~/imgs/configs-icons/cotas-parlamentares.svg" alt="">
+                    <p>Cotas Parlamentares</p>
+                </div>
+            </a>
+        </div>
+        <div class="col">
+            <a class="nav-link text-dark" asp-area="" asp-controller="SolicitacaoAdiantamentoCotas" asp-action="Index">
+                <div class="box-card">
+                    <img src="@("/imgs/saldo-implantar-icon.svg")" alt="">
+                    <p>Adiantamento de Cotas</p>
+                </div>
+            </a>
+        </div>
+        <div class="col">
+            <a class="nav-link text-dark" asp-area="" asp-controller="Gabinetes" asp-action="Index">
+                <div class="box-card">
+                    <img src="~/imgs/configs-icons/gabinetes.svg" alt="">
+                    <p>Gabinetes</p>
+                </div>
+            </a>
+        </div>
+       @* <div class="col">
+            <a class="nav-link text-dark" asp-area="" asp-controller="Parlamentar" asp-action="Index">
+                <div class="box-card">
+                    <img src="~/imgs/configs-icons/parlamentares.svg" alt="">
+                    <p>Parlamentares</p>
+                </div>
+            </a>
+        </div>*@
+        <div class="col">
+            <a class="nav-link text-dark" asp-area="" asp-controller="Users" asp-action="Index">
+                <div class="box-card">
+                    <img src="~/imgs/configs-icons/user.svg" alt="">
+                    <p>Usuários</p>
+                </div>
+            </a>
+        </div>
+        <div class="col">
+            <a class="nav-link text-dark" asp-area="" asp-controller="ProdutoTipos" asp-action="Index">
+                <div class="box-card">
+                    <img src="~/imgs/configs-icons/tipo-de-produto.svg" alt="">
+                    <p>Tipos de Produtos</p>
+                </div>
+            </a>
+        </div>
+        <div class="col">
+            <a class="nav-link text-dark" asp-area="" asp-controller="Produtos" asp-action="SelectTipos">
+                <div class="box-card">
+                    <img src="~/imgs/configs-icons/product.svg" alt="">
+                    <p>Produtos</p>
+                </div>
+            </a>
+        </div>
+        <div class="col">
+            <a class="nav-link text-dark" asp-area="" asp-controller="Admin" asp-action="Logs">
+                <div class="box-card">
+                    <img src="~/imgs/configs-icons/log-de-evento.svg" alt="">
+                    <p>Log de Eventos</p>
+                </div>
+            </a>
+        </div>
+    </div>
+</section>

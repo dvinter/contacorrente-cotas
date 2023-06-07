@@ -1,0 +1,149 @@
+﻿@using AlesCotas.Application.Classes
+@using AlesCotas.Application.Dto
+@using AlesCotas.Application.Filter.Base
+@model ListaPaginada<GabineteDto>
+
+
+@{
+    ViewData["Title"] = "Lista de Gabientes";
+    BaseEntityFilter filtro = ViewBag.filtro;
+}
+
+
+<section class="section-table">
+    <div class="box-title">
+        <div class="back-btn">
+            @*<button onclick="changePage('Gabinetes','Gabinetes')"><img src="~/imgs/arrow.svg" alt="" srcset=""></button>*@
+            <button type="button" onclick="location.href='@Url.Action("Index", "Admin")'"><img src="~/imgs/arrow.svg" alt="" srcset=""></button>
+            <h4>Gabinetes</h4>
+        </div>
+
+        <div class="box-btn-to-edit">
+            <button type="button" class="btn btn-primary" onclick="location.href='@Url.Action("New")'">Novo Gabinete</button>
+        </div>
+    </div>
+    <span class="line"></span>
+    <div class="box-form">
+        <div class="box-form-content">
+            <div class="box-content-title mb-3">
+                <div class="box-text mb-3">
+                    <img src="~/imgs/config.svg" alt="">
+                    <h4>Lista de Gabinetes</h4>
+                </div>
+                <form asp-action="Index" class="w-100 ">
+                    <div class="row align-items-end">
+                        <div class="form-group mb-3 col-12 col-md-12 col-lg-7">
+                            <label for="inputEmail4">Filtro</label>
+                            <input type="text" class="form-control  " id="inputEmail4" asp-for="@filtro.FilterText" name="FilterText"
+                                   placeholder="Digite para pesquisar">
+                        </div>
+                        <div class="form-group mb-3 col-12 col-md-12 col-lg-3">
+                            <label for="inputEmail4">Status</label>
+                            <select class="form-select" aria-label="Filtro Status" asp-for="@filtro.Status" name="Status">
+                                <option value="0">Todos</option>
+                                <option value="1">Ativos</option>
+                                <option value="2">Inativos</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-12 col-lg-2 mb-3">
+                            <button class="btn btn-primary w-100">Buscar</button>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+            <div class="box-table">
+                <div style="margin-bottom: 1rem;" class="table-responsive ">
+                    <table class="table table-striped  table-hove align-middle ">
+                        <thead>
+                            <tr>
+                                <th scope="col">Nome </th>
+                                @*<th scope="col">Parlamentar</th>*@
+                                <th scope="col">Ativo</th>
+                                <th style="min-width: 140px" scope="col">Atualizado em</th>
+                                <th scope="col">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>@Html.DisplayFor(modelItem => item.Name)</td>
+                                    @*<td>@Html.DisplayFor(modelItem => item.ParlamentarNome)</td>*@
+                                    <td>@Html.DisplayFor(modelItem => item.Ativo)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.UltimaAtualizacao)</td>
+                                    <td style="width:50px ;">@*50px para cada botão !!*@
+                                        <div class="btns-table-action">
+                                            @*      <button onclick="refreshUser(@item.Id)" class="btn-options">
+                                        <img src="~/imgs/refresh-icon.svg" alt="">
+                                        </button>*@
+
+                                            @*@if (item.Ativo)
+                                            {
+                                                <button class="btn-cancel">
+                                                    <a asp-action="Disable" asp-route-id="@item.Id">
+                                                        <img src="~/imgs/cancelado-icon.svg" alt="">
+                                                    </a>
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button class="btn-options">
+                                                    <a asp-action="Enable" asp-route-id="@item.Id">
+                                                        <img src="~/imgs/validar.svg" alt="">
+                                                    </a>
+                                                </button>
+                                            }*@
+
+                                            <button class="btn-edit">
+                                                <a asp-action="Edit" asp-route-id="@item.Id">
+                                                    <img src="~/imgs/edit.svg" alt="">
+                                                </a>
+                                            </button>
+                                            @*<button class="btn-delete">
+                                                <a asp-action="Delete" asp-route-id="@item.Id
+                                                    <img src="~/imgs/lixo-icon.svg" alt="">
+                                                    </a>
+                                            </button>*@
+                                        </div>
+                                    </td>
+                                </tr>
+
+                            }
+
+
+                        </tbody>
+                    </table>
+                </div>
+                <div class="footer-table">
+                    <div>
+                        <p>Totais de Gabinetes: @Model.Count de @Model.TotalRegistros</p>
+                    </div>
+                   <nav aria-label="Page navigation example">
+                        <ul class="pagination">
+
+                            <li class="page-item @(Model.TemAnterior? "" : "disabled")">
+                                <a class="page-link" asp-route-filter.FilterText="@filtro.FilterText" asp-route-filter.Status="@filtro.Status" asp-route-filter.PageNumber=@(Model.PaginaAtual-1) aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+
+                            @for (var i = 1; i <= Model.TotalPaginas; i++)
+                            {
+                                <li class="page-item @(Model.PaginaAtual == i ? "active" : "")">
+                                    <a class="page-link" asp-route-filter.FilterText="@filtro.FilterText" asp-route-filter.Status="@filtro.Status" asp-route-filter.PageNumber=@i>@(i)</a>
+                                </li>
+                            }
+
+                            <li class="page-item @(Model.TemProxima? "" : "disabled")">
+                                <a class="page-link" asp-route-filter.FilterText="@filtro.FilterText" asp-route-filter.Status="@filtro.Status" asp-route-filter.PageNumber=@(Model.PaginaAtual+1) aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

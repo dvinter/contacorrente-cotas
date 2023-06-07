@@ -1,0 +1,138 @@
+﻿@using AlesCotas.Application.Dto
+@using AlesCotas.Domain.Entities
+@using AlesCotas.Domain.Enum
+@using AlesCotas.Infra.CrossCutting.Utils.Extensions
+@model Usuario
+@{
+    bool editMode = Model?.Id > 0;
+    ViewData["Title"] = (editMode ? "Editar" : "Novo") +  " Usuário";
+    var roles = Enum.GetValues(typeof(EUsuarioPerfil));
+    List<GabineteDto> gabinetes = ViewBag?.gabinetes;
+}
+
+<section class="edit-form">
+    <div class="back-btn">
+        <button type="button" onclick="location.href='@Url.Action("Index", "Users")'"><img src="~/imgs/arrow.svg" alt="" srcset=""></button>
+        <h4>@ViewData["Title"]</h4>
+    </div>
+    <span class="line"></span>
+    <div class="box-form">
+        <div class="box-form-content">
+            <div class="col-one">
+
+                @if (!editMode)
+                {
+                    <form asp-action="BuscarMatricula">
+                        <div class="row align-items-end">
+                            <div class="form-group mb-3 col-12 col-md-12 col-lg-10">
+                                <label for="inputEmail4">Buscar Usuário ALES</label>
+                                <input name="consultaMatricula" type="text" class="form-control " id="consultaMatricula" placeholder="Login ALES">
+                            </div>
+                            <div class="col-12 col-md-12 col-lg-2 mb-3">
+                                <button type="submit" class="btn btn-primary w-100">Buscar</button>
+                            </div>
+                        </div>
+                    </form>
+                }
+
+
+                <form asp-action="Save" >
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" asp-for="Id" />
+                    <div class="row">
+                        <div class="form-group mb-3 col-12 col-md-12 col-lg-12 col-xl-5">
+                            <label for="inputEmail4">Nome</label>
+                            <input asp-for="Nome" type="text" class="form-control" placeholder="Nome" >
+                        </div>
+                        <div class="form-group mb-3 col-12 col-md-12 col-lg-12 col-xl-5">
+                            <label for="userEmail">E-mail</label>
+                            <input asp-for="Email" type="text" class="form-control" placeholder="E-mail" id="userEmail">
+                        </div>
+                        <div class="form-group mb-3 col-12 col-md-12 col-lg-12 col-xl-2">
+                            <label for="UserName">Login ALES</label>
+                            <input asp-for="Matricula" type="text" class="form-control" placeholder="Login ALES" readonly>
+                        </div>
+                        <div hidden class="form-group mb-3 col-6 col-md-1 col-lg-1">
+                            <label for="inputEmail4">Ativo</label>
+                            @Html.CheckBoxFor(m => m.Ativo)
+                           @* <label for="inputEmail4">Ativo</label>
+                            <input asp-for="Ativo" type="checkbox" class="form-control">*@
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="form-group mb-3 col-12 col-md-12 col-lg-10">
+                            <label for="userSetor">Setor/Cargo</label>
+                            <input asp-for="Setor" type="text" class="form-control " id="userSetor" placeholder="">
+                        </div>
+                    </div>
+                        <div class="row">
+                        
+                        <div class="form-group mb-3 col-12 col-md-12 col-lg-12 col-xl-3">
+                            <label for="inputEmail4">Perfil do usuário *</label>
+                            <select asp-for="Role" class="form-select" aria-label="Perfil do usuário">
+                                @foreach (int role in roles)
+                                {
+                                    <option value="@role"> @(((EUsuarioPerfil)role).GetEnumDescription()) </option>
+                                }
+                                </select>
+                        </div>
+                        <div class="form-group mb-3 col-12 col-md-12 col-lg-12 col-xl-5">
+                            <label for="inputEmail4">Gabinete vinculado</label>
+                            <select asp-for="GabineteId" class="form-select" aria-label="Gabinete">
+                                    <option value="" selected>Selecione um gabinete</option>
+                                @foreach (var gabinete in gabinetes.Where(x=>x.Ativo))
+                                {
+                                    <option value="@gabinete.Id">@gabinete.Name</option>
+                                }
+                                @foreach (var gabinete in gabinetes.Where(x => !x.Ativo))
+                                {
+                                    <option value="@gabinete.Id" disabled>@gabinete.Name</option>
+                                }
+                                </select>
+                        </div>
+                    </div>
+                    <div class="btn-request-form">
+                        <div class="d-flex flex-row justify-content-between w-100 align-items-center">
+                        <button type="submit" class="btn btn-primary">@(editMode ? "Salvar" : "Cadastrar")</button>
+                        <button onclick="location.href='@Url.Action("Index", "Users")'" type="button" class="btn btn-primary btn-primary-outline">Voltar</button>
+                            @*@if (editMode)
+                            {
+                //<a class="pt-3" href="@Url.Action("SendChangePasswordEmailAction", "Users", new { email = Model.Email })">
+                                <button type="button" onclick="sendMailChangePassword()" class="btn btn-warning btn-primary-outline ms-3">Enviar Redefinição de senha</button>
+                                //</a>
+                            }*@
+                    </div>
+                    </div>
+                    
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+
+
+    function sendMailChangePassword(){
+        const mail = document.getElementById("userEmail");
+    $.ajax({
+        type: 'GET',
+            url: "../SendChangePasswordEmailAction?email=" + mail.value,
+        contentType: false,
+        processData: false,
+            success: function (result) {
+                if (result)
+                    infoSwal("E-mail enviado com sucesso.");
+                else
+                    errorSwal("Erro ao enviar e-mail: "+" Verifique o endereço de e-mail do usuário");
+            },
+        error: function (data) {
+            console.error(data);
+                errorSwal("Erro ao enviar e-mail: Falha do servidor. Contacte o administrador do sistema.");
+        }
+    });
+
+    }
+
+</script>

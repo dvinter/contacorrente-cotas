@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Entities\Base\**" />
+    <Compile Remove="Filtros\Base\**" />
+    <Compile Remove="Interfaces\Context\**" />
+    <Compile Remove="Interfaces\Servicos\**" />
+    <Compile Remove="Servicos\**" />
+    <EmbeddedResource Remove="Entities\Base\**" />
+    <EmbeddedResource Remove="Filtros\Base\**" />
+    <EmbeddedResource Remove="Interfaces\Context\**" />
+    <EmbeddedResource Remove="Interfaces\Servicos\**" />
+    <EmbeddedResource Remove="Servicos\**" />
+    <None Remove="Entities\Base\**" />
+    <None Remove="Filtros\Base\**" />
+    <None Remove="Interfaces\Context\**" />
+    <None Remove="Interfaces\Servicos\**" />
+    <None Remove="Servicos\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="6.0.12" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.13" />
+    <PackageReference Include="Microsoft.Extensions.Identity.Core" Version="6.0.12" />
+    <PackageReference Include="Microsoft.Extensions.Identity.Stores" Version="6.0.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AlesCotas.Infra.CrossCutting.Utils\AlesCotas.Infra.CrossCutting.Utils.csproj" />
+  </ItemGroup>
+
+</Project>

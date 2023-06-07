@@ -1,0 +1,246 @@
+﻿@using AlesCotas.Application.Classes
+@using AlesCotas.Application.Dto
+@using AlesCotas.Application.Filter
+@using AlesCotas.Application.Filter.Base
+@using AlesCotas.Domain.Entities
+@using AlesCotas.Domain.Enum
+@using System.Globalization
+
+@model ListaPaginada<SolicitacaoDto>
+
+@{
+    CultureInfo ptBr = new CultureInfo("pt-BR");
+    bool podeSolicitar = false;
+    bool podeEditar = false;
+    ProdutoTipoDto produtoTipo = ViewBag.produtoTipo;
+
+    ViewData["Title"] = produtoTipo != null ? "Solicitações de " + produtoTipo.Name : "Todas as Solicitações";
+    SolicitacaoFilter filtro = ViewBag.filtro;
+
+    Usuario usuario = ViewBag.user;
+    List<GabineteDto> gabinetes = ViewBag.gabinetes;
+
+    if (usuario.GabineteId.HasValue)
+    {
+        filtro.GabineteId = usuario.GabineteId.Value;
+    }
+    ProdutoTipoUsuarioPerfilDto perfil = produtoTipo.Usuarios.FirstOrDefault(x => x.Perfil.Equals(usuario.Role));
+
+    if (produtoTipo != null)
+    {
+        if (perfil != null)
+        {
+            podeSolicitar = perfil.PermiteSolicitar;
+            podeEditar = perfil.TipoAlteracao != ETipoAleracoes.Nenhuma;
+        }
+    }
+
+    //--bs-gutter-x: 1.5rem;
+}
+<section class="section-table">
+    <div class="box-title">
+        <div class="back-btn">
+            <button type="button" onclick="location.href='@Url.Action("SelectTipos", "Solicitacoes")'"><img src="~/imgs/arrow.svg" alt="" srcset=""></button>
+            <h4 class="d-none d-lg-block">@ViewData["Title"]</h4>
+        </div>
+
+
+        @if (podeSolicitar)
+        {
+            <div class="box-btn-to-edit">
+                <button onclick="location.href='@Url.Action("NovaSolicitacao","Solicitacoes", new {ProdutoTipoId= filtro.ProdutoTipoId})'" type="button" class="btn btn-primary px-4 py-2">
+                    Nova Solicitação@(
+                produtoTipo != null ? " de " + produtoTipo.Name : ""
+                )
+                </button>
+            </div>
+        }
+    </div>
+    <span class="line"></span>
+    <div class="box-form">
+
+
+        <div class="box-form-content">
+            <div class="box-content-title mb-3">
+                <div class="box-text mb-3">
+                    <img src="~/imgs/side-request.svg" alt="">
+                    <h4>Lista de @(ViewData["Title"])</h4>
+                </div>
+                <form asp-action="Index" class="w-100 ">
+                    <input type="hidden" asp-for="@filtro.ProdutoTipoId" name="ProdutoTipoId">
+                    <div class="row align-items-end">
+                        <div class="form-group mb-3 col-12 col-md-12 col-lg-12">
+                            <label for="inputEmail4">Gabinete</label>
+                            <select class="form-select" aria-label="Filtro Gabinete" asp-for="@filtro.GabineteId" name="GabineteId" disabled="@(usuario.Role == EUsuarioPerfil.Gabinete)">
+                                <option>[Selecione um Gabinete]</option>
+                                @foreach (GabineteDto gabinete in gabinetes)
+                                {
+                                    <option value="@gabinete.Id">@gabinete.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div id="fade_area" class="overlay">
+                        </div>
+
+                        <div class="form-group mb-3 col-12 col-md-12 col-lg-4 col-xl-3">
+                            <label for="inputEmail4">Data Inicial</label>
+                            <input type="date" class="form-control" asp-for="@filtro.DataInicial" name="DataInicial" placeholder="">
+                        </div>
+                        <div class="form-group mb-3 col-12 col-md-12 col-lg-4 col-xl-3">
+                            <label for="inputEmail4">Data Final</label>
+                            <input type="date" class="form-control" asp-for="@filtro.DataFinal" name="DataFinal" placeholder="">
+                        </div>
+                        <div class="form-group mb-3 col-12 col-md-12 col-lg-4 col-xl-3">
+                            <label for="inputEmail4">Status</label>
+                            <select class="form-select" aria-label="Filtro Status" asp-for="@filtro.SolicitacaoStatus" name="SolicitacaoStatus">
+                                <option value="0">Todos</option>
+                                <option value="1">Pendentes</option>
+                                <option value="2">Aprovadas</option>
+                                <option value="3">Canceladas</option>
+                                <option value="4">Recusadas</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-12 col-lg-12 col-xl-3 mb-3">
+                            <button class="btn btn-primary w-100">Buscar</button>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+            <div class="box-table">
+                <div style="margin-bottom: 1rem;" class="table-responsive ">
+                    <table class="table table-striped  table-hove align-middle ">
+                        <thead>
+                            <tr>
+                                <th scope="col">Número</th>
+                                <th scope="col">Data</th>
+                                <th scope="col">Gabinete</th>
+                                <th scope="col">Itens</th>
+                                <th style="min-width: 160px" scope="col">Total Solicitado</th>
+                                <th scope="col">Status</th>
+                                <th style="min-width: 140px" scope="col">Atualizado em</th>
+                                <th scope="col">Publicado</th>
+                                <th scope="col">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>@Html.DisplayFor(modelItem => item.Numero)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.DataSolicitacao)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.GabineteDescricao)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.QtdItens)</td>
+                                    @if (produtoTipo.HabilitaValoresDolar)
+                                    {
+                                        <td>US$ @item.TotalDolar?.ToString("N2",ptBr)</td>
+                                    }
+                                    else
+                                    {
+                                        <td>@item.TotalSolicitado.ToString("C2",ptBr)</td>
+                                    }
+                                    <td><span class="@(item.StatusAtual.Status == ESolicitacaoStatus.Aprovado ? "concluido" : item.StatusAtual.Status == ESolicitacaoStatus.Recusada ? "cancelado" : "andamento" )">@Html.DisplayFor(modelItem => item.StatusAtual.StatusDescricao)</span> </td>
+                                    <td>@Html.DisplayFor(modelItem => item.UltimaAtualizacao)</td>
+                                    <td>@(item.Publicado ? "Sim" : "Não")</td>
+                                    <td>
+                                        <div class="btns-table-action ">
+                                            @if ((item.StatusAtual.Status == ESolicitacaoStatus.Pendente || (perfil.PermiteAlterarAprovado && item.StatusAtual.Status == ESolicitacaoStatus.Aprovado)) && podeEditar)
+                                            {
+                                                <button class="btn-edit" alt="Editar" title="Editar">
+                                                    <a asp-action="Edit" asp-route-id="@item.Id" aria-label="Previous">
+                                                        <img src="~/imgs/edit.svg" alt="">
+                                                    </a>
+                                                </button>
+                                            }
+                                            <button alt="PDF" title="PDF" class="btn-print-pdf" onclick="printExternal('Solicitacoes/Recibo/'+@item.Id)">
+                                                <img src="~/imgs/print-icon.svg" alt="">
+                                                @*<a asp-action="Recibo" asp-route-id="@item.Id" target="_blank" aria-label="Previous"> 
+                                                    
+                                                    </a>*@
+                                               
+                                            </button>
+                                            <button class="btn-options" alt="Visualizar" title="Visualizar" onclick="location.href='@Url.Action("ModalAprovacao","Solicitacoes", item)'">
+                                                <img src="~/imgs/options.svg" alt="">
+                                            </button>
+                                            
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="footer-table">
+                    <div>
+                        <p>Total de Solicitações: @Model.Count de @Model.TotalRegistros</p>
+                    </div>
+                    <nav aria-label="Page navigation example">
+                        <ul class="pagination">
+
+                            <li class="page-item @(Model.TemAnterior? "" : "disabled")">
+                                <a class="page-link"
+                                   asp-route-filter.ProdutoTipoId="@filtro.ProdutoTipoId" asp-route-filter.DataInicial="@filtro.DataInicial" asp-route-filter.DataFinal="@filtro.DataFinal"
+                                   asp-route-filter.FilterText="@filtro.FilterText" asp-route-filter.SolicitacaoStatus="@filtro.SolicitacaoStatus" asp-route-filter.PageNumber=@(Model.PaginaAtual-1) aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+
+                            @for (var i = 1; i <= Model.TotalPaginas; i++)
+                            {
+                                <li class="page-item @(Model.PaginaAtual == i ? "active" : "")">
+                                    <a class="page-link"
+                                   asp-route-filter.ProdutoTipoId="@filtro.ProdutoTipoId" asp-route-filter.DataInicial="@filtro.DataInicial" asp-route-filter.DataFinal="@filtro.DataFinal"
+                                   asp-route-filter.FilterText="@filtro.FilterText" asp-route-filter.SolicitacaoStatus="@filtro.SolicitacaoStatus" asp-route-filter.PageNumber=@i>@(i)</a>
+                                </li>
+                            }
+
+                            <li class="page-item @(Model.TemProxima? "" : "disabled")">
+                                <a class="page-link"
+                                   asp-route-filter.ProdutoTipoId="@filtro.ProdutoTipoId" asp-route-filter.DataInicial="@filtro.DataInicial" asp-route-filter.DataFinal="@filtro.DataFinal"
+                                   asp-route-filter.FilterText="@filtro.FilterText" asp-route-filter.SolicitacaoStatus="@filtro.SolicitacaoStatus" asp-route-filter.PageNumber=@(Model.PaginaAtual+1) aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    function printExternal(url) {
+        var printWindow = window.open(url, 'Print', 'left=200, top=200, width=950, height=500, toolbar=0, resizable=0');
+
+        printWindow.addEventListener('load', function () {
+            if (Boolean(printWindow.chrome)) {
+                printWindow.print();
+                //setTimeout(function () {
+                //    printWindow.close();
+                //}, 500);
+            } else {
+                printWindow.print();
+                //printWindow.close();
+            }
+        }, true);
+    }
+</script>
+
+@*<script>
+    function refreshUser() {
+        refersh('Alterar status', 'Está operação poderá ser desfeita!').then(result => {
+            switch (result.isConfirmed) {
+                case true:
+                    console.log('Deletado')
+                    break;
+                case false:
+                    console.log('Cancelado')
+                    break;
+                default:
+                // code block
+            }
+
+        })
+    }
+</script>*@

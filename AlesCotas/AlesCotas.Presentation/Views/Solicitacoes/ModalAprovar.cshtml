@@ -1,0 +1,277 @@
+﻿@using AlesCotas.Application.Dto
+@using AlesCotas.Domain.Entities
+@using AlesCotas.Domain.Enum
+@using AlesCotas.Infra.CrossCutting.Utils.Extensions
+@using System.Globalization
+@model Solicitacao
+@{
+    bool editMode = Model?.Id > 0;
+    ViewData["Title"] = "Detalhes da Solicitação";
+    var grupos = Model.Campos.OrderBy(x => x.Ordem).Select(x => x.Grupo).Distinct();
+    ProdutoTipoDto produtoTipo = ViewBag.produtoTipo;
+    var currentStatus = Model.Historico.OrderBy(x => x.Sequencia).LastOrDefault();
+    CultureInfo ptBr = new CultureInfo("pt-BR");
+    Usuario user = ViewBag.user;
+
+
+    var perfil = produtoTipo.Usuarios.FirstOrDefault(x => x.Perfil == user.Role);
+
+}
+
+<section id="approvedwithouttable">
+    <div class="back-btn">
+        <button type="button" onclick="location.href='@Url.Action("Index", "Solicitacoes", new { ProdutoTipoId=produtoTipo.Id })'"><img src="~/imgs/arrow.svg" alt="" srcset=""></button>
+        <h4>Solicitação de @produtoTipo.Name</h4>
+    </div>
+    <div class="box-form">
+        <div class="box-form-content">
+            <div class="col-one">
+                <div class="modal-content w-100">
+                    <div class="modal-header w-100">
+                        <h5 class="modal-title text-center w-100">@Model.Gabinete.Name</h5>
+
+                    </div>
+                    <div class="modal-body">
+                        <div class="box-title mb-3">
+                            <div class="box-solitacao-modal pt-2">
+                                <p>
+                                    <small class="text-muted">Data da Solicitação: </small>@Model.DataSolicitacao.ToShortDateString()
+                                </p>
+                            </div>
+                            <div class="box-solitacao-modal pt-2">
+                                <p>
+                                    <small class="text-muted">N° da solicitação: </small>@Model.Numero
+                                </p>
+                            </div>
+                            <div class="box-solitacao-modal pt-2">
+                                <p>
+                                    <small class="text-muted">Observações: </small>@Model.Observacoes
+                                </p>
+                            </div>
+                        </div>
+                        <div class="box-table">
+                            <div class="table-responsive">
+
+                                @foreach (var grupo in grupos)
+                                {
+                                    <h6> @grupo </h6>
+
+                                    <table class="table table-striped  table-hove align-middle ">
+                                        @*<thead>
+
+                                    <tr>
+                                    <th scope="col">Qtd. Solicitada</th>
+                                    <th scope="col">Tipo e cor</th>
+                                    <th scope="col">Grampeamento</th>
+                                    <th scope="col">Anexo</th>
+                                    <th scope="col">Valor médio</th>
+                                    <th scope="col">Valor total</th>
+                                    <th scope="col">Qtd. Autorizada</th>
+                                    </tr>
+                                    </thead>*@
+                                        <tbody>
+                                            @foreach (var item in Model.Campos.OrderBy(x => x.Ordem))
+                                            {
+                                                if (item.Grupo == grupo)
+                                                {
+                                                    <tr>
+                                                        <td>@item.Name</td>
+                                                        @if (item.TipoCampo == AlesCotas.Domain.Enum.ETipoCampo.SimNao)
+                                                        {
+                                                            <td>@(item.BoolValor ? "Sim" : "Não")</td>
+                                                        }
+                                                        else if (item.TipoCampo == AlesCotas.Domain.Enum.ETipoCampo.Data)
+                                                        {
+                                                            <td>@(item.DateTimeValor.HasValue ? item.DateTimeValor.Value.ToShortDateString() : item.Valor)</td>
+                                                        }
+                                                        else if (item.TipoCampo == AlesCotas.Domain.Enum.ETipoCampo.DataHora)
+                                                        {
+                                                            <td>@(item.DateTimeValor.HasValue ? item.DateTimeValor.Value.ToString() : item.Valor)</td>
+                                                        }
+                                                        else if (item.TipoCampo == AlesCotas.Domain.Enum.ETipoCampo.Moeda)
+                                                        {
+                                                            <td>@(decimal.TryParse(item.Valor, out decimal d) ? d.ToString("C2",ptBr) : item.Valor)</td>
+                                                        }
+                                                        else if (item.TipoCampo == AlesCotas.Domain.Enum.ETipoCampo.NumeroDecimal)
+                                                        {
+                                                            <td>@(decimal.TryParse(item.Valor, out decimal d) ? d.ToString("N2") : item.Valor)</td>
+                                                        }
+                                                        else
+                                                        {
+                                                            <td>@item.Valor</td>
+                                                        }
+                                                    </tr>
+                                                }
+                                            }
+                                        </tbody>
+                                    </table>
+                                }
+                            </div>
+                        </div>
+                        @if (Model.Items.Count > 0)
+                        {
+                            <hr />
+                            <div class="box-table">
+                                <div class="table-responsive">
+                                    <table class="table table-striped  table-hove align-middle ">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">Item</th>
+                                                <th scope="col">Quantidade Solicitada</th>
+                                                <th scope="col">Valor (Un)</th>
+                                                <th scope="col">Valor Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var item in Model.Items)
+                                            {
+                                                <tr>
+                                                    <td>@item.Produto.Name</td>
+                                                    <td>@item.QuantidadeSolicitada.ToString("N2",ptBr)</td>
+                                                    @if (produtoTipo.HabilitaValoresDolar)
+                                                    {
+                                                        <td>US$ @item.Valor.ToString("N2",ptBr)</td>
+                                                        <td>US$ @((item.Valor * item.QuantidadeSolicitada).ToString("N2",ptBr))</td>
+                                                    }
+                                                    else
+                                                    {
+                                                        <td>@item.Valor.ToString("C2",ptBr)</td>
+                                                        <td>@((item.Valor * item.QuantidadeSolicitada).ToString("C2",ptBr))</td>
+                                                    }
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+
+                                </div>
+                            </div>
+                        }
+                        @if (produtoTipo.HabilitaAnexos)
+                        {
+                            <hr />
+                            <div class="box-table">
+                                <div class="table-responsive">
+                                    <span class="box-sub-title">Anexos</span>
+                                    <table class="table table-striped  table-hove align-middle ">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">Arquivo</th>
+                                                <th scope="col">Data</th>
+                                                <th scope="col">Tamanho</th>
+                                                <th scope="col"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var item in Model.Anexos)
+                                            {
+                                                <tr>
+                                                    <td>@item.Name</td>
+                                                    <td>@item.DataArquivo</td>
+                                                    <td>@item.Tamanho</td>
+                                                    <td>
+                                                        <a class="btn btn-primary-outline" asp-area="" asp-controller="Solicitacoes" asp-action="AnexoDownload" asp-route-anexo="@item.Id">
+                                                            Download
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+
+                                </div>
+                            </div>
+                        }
+                        <hr />
+                        <div class="box-table">
+                            <div class="table-responsive">
+                                <span class="box-sub-title">Histórico</span>
+                                <table class="table table-striped  table-hove align-middle ">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Data</th>
+                                            <th scope="col">Status</th>
+                                            <th scope="col">Usuário</th>
+                                            <th scope="col">Justificativa</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in Model.Historico)
+                                        {
+                                            <tr>
+                                                <td>@item.DataRegistro</td>
+                                                <td>@item.Status.GetEnumDescription()</td>
+                                                <td>@item.UsuarioRegistro?.UserName</td>
+                                                <td>@item.Justificativa</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+
+                            </div>
+                        </div>
+
+                        <div class="box-description-modal mb-3">
+                            @if (produtoTipo.HabilitaValoresDolar)
+                            {
+                                <div class="linha-item ">
+                                    <p>Total US$: @Model.TotalDolar.ToString("N2",ptBr)</p>
+                                </div>
+                                <div class="linha-item ">
+                                    <p>Cotação: @Model.CotacaoDolar.ToString("C2",ptBr) <small>em @Model.DataSolicitacao.ToShortDateString()</small> </p>
+                                </div>
+                            }
+                            <div class="linha-item ">
+                                <p>Total Solicitado @Model.Total.ToString("C2",ptBr)</p>
+                            </div>
+                           
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="col-12 col-md-12 col-lg-2 mb-3">
+                            @if (currentStatus.Status == ESolicitacaoStatus.Pendente)
+                            {
+                                <div class="btns-table-action">
+                                    @if (perfil.PermiteAprovar)
+                                    {
+                                        <button title="Aprovar" type="button" class="btn btn-lg btn-approved "
+                                        onclick="location.href='@Url.Action("ModalAprovar","Solicitacoes", Model)'">
+                                            <img src="~/imgs/validar.svg" alt="">Aprovar
+                                        </button>
+                                    }
+                                    @if (perfil.PermiteRecusar)
+                                    {
+                                        <button title="Recusar" type="button" class="btn btn-lg btn-disapprove"
+                                        onclick="location.href='@Url.Action("ModalRecusar","Solicitacoes", Model)'">
+                                            <img src="~/imgs/cancelado-icon.svg" alt="">Recusar
+                                        </button>
+                                    }
+                                    @if (perfil.PermiteCancelar)
+                                    {
+                                        <button title="Cancelar" type="button" class="btn btn-lg btn-disapprove"
+                                                onclick="location.href='@Url.Action("ModalCancelar","Solicitacoes", Model)'">
+                                            <img src="~/imgs/cancelado-icon.svg" alt="">Cancelar
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </div>
+                        <div class="col-12 col-md-12 col-lg-2 mb-3">
+                            <button onclick="location.href='@Url.Action("Index", "Solicitacoes", new { ProdutoTipoId=produtoTipo.Id })'" type="button"
+                                    class="btn btn-primary-outline" data-bs-dismiss="modal">
+                                Voltar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+@section Scripts {
+    <script>
+        //$(document).ready(function () {
+        //    GetCotacao();
+        //});
+        
+    </script>
+}

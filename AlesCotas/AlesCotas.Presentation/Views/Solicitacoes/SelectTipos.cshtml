@@ -1,0 +1,77 @@
+﻿@using AlesCotas.Application.Classes
+@using AlesCotas.Application.Dto
+@using AlesCotas.Application.Filter.Base
+@using AlesCotas.Domain.Entities;
+@model ListaPaginada<ProdutoTipoDto>
+
+@{
+    ViewData["Title"] = "Cadastro de Solicitações";
+    BaseEntityFilter filtro = ViewBag.filtro;
+    int qtdSolAd = ViewBag.qtdSolAd;
+    Usuario user = ViewBag.user;
+}
+<section class="section-box">
+    <div class="box-title">
+        
+           
+            <h4>@ViewData["Title"]</h4>
+        
+    </div>
+    <span class="line"></span>
+    <span class="box-sub-title">Selecione um tipo de solicitação</span>
+    <div class="box-cards row row-cols-auto ">
+        @foreach (var item in Model)
+        {
+            <div class="col">
+                <a class="nav-link text-dark" asp-area="" asp-controller="Solicitacoes" asp-action="Index" asp-route-ProdutoTipoId="@item.Id">
+                    <div class="box-card">
+                        <img src="@("/imgs/icons/"+ item.Icon)" alt="">
+                        <p>@item.Name</p>
+                        <small class="text-muted">@item.QtdSolicitacoesPendentes Solicitações Pendentes</small>
+                    </div>
+                </a>
+            </div>
+        }
+
+        @if (Model.PaginaAtual == 1 && user.Role != AlesCotas.Domain.Enum.EUsuarioPerfil.Gestor)
+        {
+            <div class="col">
+                <a class="nav-link text-dark" asp-area="" asp-controller="SolicitacaoAdiantamentoCotas" asp-action="Index">
+                    <div class="box-card">
+                        <img src="@("/imgs/saldo-implantar-icon.svg")" alt="">
+                        <p>Adiantamento de Cotas</p>
+                        <small class="text-muted">@qtdSolAd Solicitações Pendentes</small>
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+    <div class="footer-table">
+        <div>
+            <p>Tipos de Solicitações: @(Model.Count + (Model.PaginaAtual == 1 && user.Role != AlesCotas.Domain.Enum.EUsuarioPerfil.Gestor ? 1 : 0)) de @(Model.TotalRegistros + (user.Role != AlesCotas.Domain.Enum.EUsuarioPerfil.Gestor ? 1 : 0))</p>
+        </div>
+        <nav aria-label="Page navigation example">
+            <ul class="pagination">
+
+                <li class="page-item @(Model.TemAnterior? "" : "disabled")">
+                    <a class="page-link" asp-route-filter.FilterText="@filtro.FilterText" asp-route-filter.Status="@filtro.Status" asp-route-filter.PageNumber=@(Model.PaginaAtual-1) aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+
+                @for (var i = 1; i <= Model.TotalPaginas; i++)
+                {
+                    <li class="page-item @(Model.PaginaAtual == i ? "active" : "")">
+                        <a class="page-link" asp-route-filter.FilterText="@filtro.FilterText" asp-route-filter.Status="@filtro.Status" asp-route-filter.PageNumber=@i>@(i)</a>
+                    </li>
+                }
+
+                <li class="page-item @(Model.TemProxima? "" : "disabled")">
+                    <a class="page-link" asp-route-filter.FilterText="@filtro.FilterText" asp-route-filter.Status="@filtro.Status" asp-route-filter.PageNumber=@(Model.PaginaAtual+ 1) aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</section>

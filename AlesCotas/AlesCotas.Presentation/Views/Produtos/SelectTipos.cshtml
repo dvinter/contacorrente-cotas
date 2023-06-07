@@ -1,0 +1,62 @@
+﻿@using AlesCotas.Application.Classes
+@using AlesCotas.Application.Dto
+@using AlesCotas.Application.Filter.Base
+@model ListaPaginada<ProdutoTipoDto>
+
+@{
+    ViewData["Title"] = "Cadastro de Produtos";
+    BaseEntityFilter filtro = ViewBag.filtro;
+}
+
+    <div class="box-title">
+        <div class="back-btn">
+            <button type="button" onclick="location.href='@Url.Action("Index", "Admin")'"><img src="~/imgs/arrow.svg" alt="" srcset=""></button>
+            <h4>@ViewData["Title"]</h4>
+        </div>
+    </div>
+<section class="section-box">
+    <span class="line"></span>
+        <span class="box-sub-title">Selecione um tipo de produto</span>
+    <div class="box-cards row row-cols-auto ">
+        @foreach (var item in Model)
+        {
+            <div class="col">
+                <a class="nav-link text-dark" asp-area="" asp-controller="Produtos" asp-action="Index" asp-route-ProdutoTipoId="@item.Id">
+                    <div class="box-card">
+                        <img src="@("/imgs/icons/"+ item.Icon)" alt="">
+                        <p>@item.Name</p>
+                        <small class="text-muted">@item.QtdProdutos Produtos</small>
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+    <div class="footer-table">
+        <div>
+            <p>Total de Tipos de Produtos: @Model.Count de @Model.TotalRegistros</p>
+        </div>
+        <nav aria-label="Page navigation example">
+            <ul class="pagination">
+
+                <li class="page-item @(Model.TemAnterior? "" : "disabled")">
+                    <a class="page-link" asp-route-filter.FilterText="@filtro.FilterText" asp-route-filter.Status="@filtro.Status" asp-route-filter.PageNumber=@(Model.PaginaAtual-1) aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+
+                @for (var i = 1; i <= Model.TotalPaginas; i++)
+                {
+                    <li class="page-item @(Model.PaginaAtual == i ? "active" : "")">
+                        <a class="page-link" asp-route-filter.FilterText="@filtro.FilterText" asp-route-filter.Status="@filtro.Status" asp-route-filter.PageNumber=@i>@(i)</a>
+                    </li>
+                }
+
+                <li class="page-item @(Model.TemProxima? "" : "disabled")">
+                    <a class="page-link" asp-route-filter.FilterText="@filtro.FilterText" asp-route-filter.Status="@filtro.Status" asp-route-filter.PageNumber=@(Model.PaginaAtual+1) aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</section>

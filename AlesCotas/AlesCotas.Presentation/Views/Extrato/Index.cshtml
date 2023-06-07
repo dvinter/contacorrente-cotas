@@ -1,0 +1,281 @@
+﻿@using AlesCotas.Application.Classes
+@using AlesCotas.Application.Dto
+@using AlesCotas.Application.Filter
+@using AlesCotas.Application.Filter.Base
+@using AlesCotas.Domain.Entities
+@using AlesCotas.Domain.Enum
+@using AlesCotas.Infra.CrossCutting.Utils.Extensions
+@using AlesCotas.Domain.Model
+@using Microsoft.AspNetCore.Identity
+@using System.Globalization
+
+@model ExtratoViewModel
+
+@{
+    CultureInfo ptBr = new CultureInfo("pt-BR");
+    ViewData["Title"] = "Extrato de Gabinete";
+    ExtratoFilter filtro = ViewBag.filtro;
+    List<GabineteDto> gabinetes = ViewBag.gabinetes;
+    var primeiroMovimento = Model?.Movimentos?.FirstOrDefault();
+    Usuario user = ViewBag.user;
+
+    if (user.GabineteId.HasValue)
+    {
+        filtro.GabineteId = user.GabineteId.Value;
+    }
+    GabineteDto gabineteAtual = gabinetes.FirstOrDefault(x => x.Id.Equals(filtro.GabineteId));
+    ExtratoModel itemAnterior = null;
+}
+
+
+
+<section class="section-table">
+    <div class="box-title">
+
+        <h4>Extrato de conta de gabinete</h4>
+
+
+        @if (user.Role == EUsuarioPerfil.Administrador || user.Role == EUsuarioPerfil.Gestor)
+        {
+            <div class="box-btn-to-edit no-print">
+                <button type="button" class="btn btn-primary" onclick="location.href='@Url.Action("New", "MovimentoConta")'">Novo Item de Ajuste</button>
+            </div>
+        }
+    </div>
+    <span class="line"></span>
+    <div class="box-form">
+        <div class="box-form-content">
+            <div class="box-content-title  mb-3 no-print">
+                <div class="d-flex justify-content-between w-100">
+                    <div class="box-text mb-3">
+                        <img src="~/imgs/side-extract.svg" alt="">
+                        <h4>Extrato de conta de gabinete</h4>
+                    </div>
+                    <div class=" no-print">
+
+                        <div class="btn_extrato_container d-flex justify-content-between align-content-center">
+                            <form asp-action="ExportarExtrato" class=" " method="get">
+                                <input type="month" asp-for="@filtro.MesInicio" name="MesInicio" hidden>
+                                <input type="month" asp-for="@filtro.MesFim" name="MesFim" hidden>
+                                <input type="hidden" asp-for="@filtro.GabineteId" name="GabineteId">
+                                <input type="hidden" asp-for="@filtro.TipoData" name="TipoData">
+                                <button class=" btn_extrato p-2"><img style="width:40px" src="~/imgs/excel.svg" alt=""></button>
+                            </form>
+                            <button class=" btn_extrato p-2" onclick="imprimir()"><img style="width:40px" src="~/imgs/print-icon.svg" alt=""></button>
+                        </div>
+
+                    </div>
+                </div>
+                <form asp-action="Index" class="w-100">
+                    <div class="row align-items-end">
+                        <div class="form-group mb-3 col-12 col-md-3 col-lg-3 col-xl-3">
+                            <label for="inputEmail4">Gabinete</label>
+                            <select class="form-select" aria-label="Filtro Gabinete" asp-for="@filtro.GabineteId" name="GabineteId" disabled="@(user.Role != EUsuarioPerfil.Gestor && user.Role != EUsuarioPerfil.Administrador)">
+                                <option>[Selecione um Gabinete]</option>
+                                @foreach (GabineteDto gabinete in gabinetes)
+                                {
+                                    <option value="@gabinete.Id">@gabinete.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group mb-3 col-12 col-md-2 ">
+                            <label for="inputEmail4">Tipo de Data</label>
+                            <select class="form-select" aria-label="Tipo da Data" asp-for="@filtro.TipoData" name="TipoData">
+                            <option value="0">Data de Registro</option>
+                            <option value="1">Data de Movimento</option>
+                        </select>
+                        </div>
+                        <div class="form-group mb-3 col-12 col-md-2 ">
+                            <label for="inputEmail4">Mês Início</label>
+                            <input type="month" class="form-control" id="inputEmail4" asp-for="@filtro.MesInicio" name="MesInicio"
+                                   placeholder="01/2023">
+                        </div>
+                        <div class="form-group mb-3 col-12 col-md-2">
+                            <label for="inputEmail4">Mês Fim</label>
+                            <input type="month" class="form-control" id="inputEmail4" asp-for="@filtro.MesFim" name="MesFim"
+                                   placeholder="01/2023">
+                        </div>
+                        <div class="col-12 col-md-12 col-lg-12 col-xl-2 mb-3">
+                            <button class="btn btn-primary w-100">Buscar</button>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+            <div class="box-table">
+                <div class="on-print-block">
+                    <h5>@gabineteAtual?.Name</h5>
+                    <h6>@(filtro.TipoData == AlesCotas.Domain.Filtros.Enum.EFiltroTipoData.DataRegistro ? "Data de Registro" : "Data de Movimento")</h6>
+                    <h6>@filtro.MesInicio.ToString("MMMM") de @filtro.MesInicio.ToString("yyyy") @(filtro.MesFim != filtro.MesInicio ? "à "+ filtro.MesFim.ToString("MMMM")+ " de "+ filtro.MesFim.ToString("yyyy") : "")</h6>
+                </div>
+                <div class="row justify-content-end">
+                    <section class="homeIndex col">
+                        <div class="list-boxes row gy-3 justify-content-center">
+                            <div class="col-12 col-sm-6 col-md-4 col-lg-4 col-xl-4 ">
+                                <div class="box-small">
+                                    <div class="box-title">
+                                        <img src="~/imgs/total-gasto-icon.svg" alt="">
+                                        <h6>Saldo @(filtro.MesFim.Month == DateTime.Now.Month && filtro.MesFim.Year == DateTime.Now.Year ? "Atual" : "Final"):</h6>
+                                    </div>
+                                    <div class="w-100 box-value-line">
+                                        <p class="text-self-end">@Model.SaldoAtual.ToString("C2",ptBr)</p>
+                                        <span class="line-primary"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-sm-6 col-md-4 col-lg-4 col-xl-4 ">
+                                <div class="box-small">
+                                    <div class="box-title">
+                                        <img src="~/imgs/andamento-icon.svg" alt="">
+                                        <h6>Saldo Reservado:</h6>
+                                    </div>
+                                    <div class="w-100 box-value-line">
+                                        <p class="text-self-end">@Model.SaldoReservado.ToString("C2",ptBr)</p>
+                                        <span class="line-andamento"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-sm-6 col-md-4 col-lg-4 col-xl-4 ">
+                                <div class="box-small">
+                                    <div class="box-title">
+                                        <img src="~/imgs/saldo-icon.svg" alt="">
+                                        <h6>Saldo Disponível:</h6>
+                                    </div>
+                                    <div class="w-100 box-value-line">
+                                        <p class="text-self-end">@Model.SaldoDisponivel.ToString("C2",ptBr)</p>
+                                        <span class="line-concluido"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+                @*      <div class="col-one">
+                <div class="box-title mb-3">
+                <div class="box-sub-title pb-1">
+                <p><img src="~/imgs/form-money.svg" alt="">Disponível</p>
+                </div>
+                <h4>2500.70</h4>
+                </div>
+                </div>*@
+
+                <div style="margin-bottom: 1rem;" class="table-responsive">
+
+                    <table class="table table-striped table-hove align-middle">
+                        <thead>
+                            <tr>
+                                <th scope="col"></th>
+                                <th style="min-width: 160px" scope="col">Data Registro</th>
+                                <th style="min-width: 160px" scope="col">Data Movimento</th>
+                                <th scope="col">Movimento</th>
+                                <th scope="col">Descrição</th>
+                                <th scope="col">Tipo</th>
+                                <th scope="col">Valor</th>
+                                <th scope="col">Saldo</th>
+                                <th class="no-print"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (primeiroMovimento != null)
+                            {
+                                <tr>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td>Saldo Anterior</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td class="@(primeiroMovimento.SaldoAnterior < 0 ? "extrato-debit" : "extrato-credit")">R$ @Html.DisplayFor(x=> primeiroMovimento.SaldoAnterior)</td>
+                                    <td class="no-print"></td>
+                                </tr>
+                            }
+
+                            @foreach (var item in Model.Movimentos)
+                            {
+
+                                @*if (itemAnterior is null || item.DataMovimento.Month != itemAnterior.DataMovimento.Month)
+                                    {
+                                        <tr class="extrato-month">
+                                            <td class="extrato-month"></td>
+                                            <td class="extrato-month"></td>
+                                            <td class="extrato-month">@item.DataMovimento.ToString("MMMM/yy")</td>
+                                            <td class="extrato-month"></td>
+                                            <td class="extrato-month">Saldo Anterior</td>
+                                            <td class="extrato-month"></td>
+                                            <td class="extrato-month"></td>
+                                            <td class="extrato-month @(item.SaldoAnteriorAno < 0 ? "extrato-debit" : "extrato-credit")">R$ @Html.DisplayFor(x=> item.SaldoAnteriorAno)</td>
+                                            <td class="extrato-month no-print"></td>
+                                        </tr>
+                                    }*@
+
+                                <tr class="@((item.SequenciaMovimento > 1 ? "extrato-muted" : ""))">
+                                    <td>@Html.DisplayFor(modelItem => item.RowNumber)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.DataRegistro)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.DataMovimento)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.MovimentoId)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.Descricao)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.TipoDescricao)</td>
+                                    <td class="@(item.Valor < 0 ? "extrato-debit" : "extrato-credit")">@item.Valor.ToString("C2",ptBr)</td>
+                                    <td class="@(item.SaldoAtual < 0 ? "extrato-debit" : "extrato-credit")">@item.SaldoAtual.ToString("C2",ptBr)</td>
+                                    <td class="no-print" style="width:80px ;">
+                                        @if (((item.Tipo == AlesCotas.Domain.Enum.ETipoMovimento.ItemAjuste && user.Role == EUsuarioPerfil.Gestor) || user.Role == EUsuarioPerfil.Administrador) && item.SequenciaMovimento == 1 && !item.Estorno)
+                                        {
+                                            <div class="btns-table-action">
+                                                <button class="btn-edit">
+                                                    <a asp-action="Edit" asp-controller="MovimentoConta" asp-route-id="@item.MovimentoId">
+                                                        <img src="~/imgs/edit.svg" alt="">
+                                                    </a>
+                                                </button>
+                                            </div>
+                                        }
+                                    </td>
+                                </tr>
+
+                                
+                                    itemAnterior = item;
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                @*<div class="footer-table">
+                <div>
+                <p>Totais de Gabinetes: @Model.Count de @Model.TotalRegistros</p>
+                </div>
+                <nav aria-label="Page navigation example">
+                <ul class="pagination">
+
+                <li class="page-item @(Model.TemAnterior? "" : "disabled")">
+                <a class="page-link" asp-route-filter.FilterText="@filtro.FilterText" asp-route-filter.Status="@filtro.Status" asp-route-filter.PageNumber=@(Model.PaginaAtual-1) aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+                </a>
+                </li>
+
+                @for (var i = 1; i <= Model.TotalPaginas; i++)
+                {
+                <li class="page-item @(Model.PaginaAtual == i ? "active" : "")">
+                <a class="page-link" asp-route-filter.FilterText="@filtro.FilterText" asp-route-filter.Status="@filtro.Status" asp-route-filter.PageNumber=@i>@(i)</a>
+                </li>
+                }
+
+                <li class="page-item @(Model.TemProxima? "" : "disabled")">
+                <a class="page-link" asp-route-filter.FilterText="@filtro.FilterText" asp-route-filter.Status="@filtro.Status" asp-route-filter.PageNumber=@(Model.PaginaAtual+1) aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+                </a>
+                </li>
+                </ul>
+                </nav>
+                </div>*@
+            </div>
+        </div>
+    </div>
+</section>
+
+
+@section Scripts {
+    <script>
+        function imprimir() {
+            window.print();
+        }
+    </script>
+}

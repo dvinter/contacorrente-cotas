@@ -1,0 +1,149 @@
+﻿@using AlesCotas.Application.Dto
+@using AlesCotas.Domain.Entities
+@using AlesCotas.Domain.Enum
+@using AlesCotas.Infra.CrossCutting.Utils.Extensions
+@model SolicitacaoAdiantamentoCota
+@{
+    bool editMode = Model?.Id > 0;
+    List<GabineteDto> gabinetes = ViewBag?.gabinetes;
+    ViewData["Title"] = (editMode ? "Editar" : "Nova") + " Solicitação de Adiantamento de Cota Parlamentar";
+    CotaDto cotaAtual = ViewBag.cota;
+    
+    DateTime maxData = cotaAtual != null && cotaAtual.MesLimiteAdiantamento.HasValue ? (new DateTime(DateTime.Now.Year, cotaAtual.MesLimiteAdiantamento.Value, 1)) : new DateTime(DateTime.Now.Year,12,1);
+    DateTime minData = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddMonths(1);
+    Usuario user = ViewBag.user;
+    if (!editMode)
+    {
+        Model.MesReferente = minData;
+        Model.DataSolicitacao = DateTime.Now;
+        Model.GabineteId = user.GabineteId.HasValue ? user.GabineteId.Value :0;
+    }
+
+}
+<style>
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+</style>
+<section class="request-form">
+    <div class="back-btn">
+        <button type="button" onclick="location.href='@Url.Action("Index")'"><img src="~/imgs/arrow.svg" alt="" srcset=""></button>
+        <h4>@ViewData["Title"]</h4>
+    </div>
+    <span class="line"></span>
+    @if (cotaAtual != null)
+    {
+        
+        <div class="box-form">
+            <div class="box-form-content">
+                <div class="col-one">
+                    <div class="box-title mb-3">
+                        <div class="box-sub-title pb-1">
+                            <p>Cota: @cotaAtual.Lei / @cotaAtual.Descricao</p>
+                        </div>
+                        <h4>@cotaAtual?.Valor.ToString("C")</h4>
+                    </div>
+                    <form asp-action="Save">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" asp-for="Id" />
+
+                        <div class="row">
+
+                            <div class="form-group mb-4">
+                                <label for="inputEmail4">Descrição</label>
+                                <textarea placeholder="Adicione uma descrição" asp-for="Descricao" class="form-control" cols="30"
+                                  rows="5"></textarea>
+                                <span asp-validation-for="Descricao" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group mb-3 col-12 col-md-6 col-lg-6">
+                                <label asp-for="DataSolicitacao">Data Solicitacao</label>
+                                <input disabled type="date" asp-for="DataSolicitacao" class="form-control">
+                                <span asp-validation-for="DataSolicitacao" class="text-danger"></span>
+                            </div>
+                            <div class="form-group mb-3 col-12 col-md-6 col-lg-6">
+                                <label for="inputEmail4">Gabinete vinculado *</label>
+                                <select asp-for="GabineteId" class="form-select" aria-label="Gabinete" readonly="@(user.Role == EUsuarioPerfil.Gabinete)">
+                                    <option value="" selected>Selecione um gabinete</option>
+                                    @foreach (var gabinete in gabinetes.Where(x => x.Ativo))
+                                    {
+                                        <option value="@gabinete.Id">@gabinete.Name</option>
+                                    }
+                                    @foreach (var gabinete in gabinetes.Where(x => !x.Ativo))
+                                    {
+                                        <option value="@gabinete.Id" disabled>@gabinete.Name</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group mb-3 mt-4">
+                            <label asp-for="MesReferente">Mês Referência</label>
+                            <input type="month" asp-for="MesReferente" class="form-control" placeholder="01/2023" min="@minData.ToString("yyyy-MM")" max="@maxData.ToString("yyyy-MM")">
+                            <span asp-validation-for="MesReferente" class="text-danger"></span>
+                        </div>
+
+
+                        @*  <div class="form-group mb-3">
+                        <label for="inputEmail4">Permitir Adiantamento Até</label>
+                        <select class="form-select" aria-label="Filtro Gabinete" asp-for="MesLimiteAdiantamento">
+                            <option value="">Não permitir adiantamento</option>
+                            <option value="2">Fevereiro</option>
+                            <option value="3">Março</option>
+                            <option value="4">Abril</option>
+                            <option value="5">Maio</option>
+                            <option value="6">Junho</option>
+                            <option value="7">Julho</option>
+                            <option value="8">Agosto</option>
+                            <option value="9">Setembro</option>
+                            <option value="10">Outubro</option>
+                            <option value="11">Novembro</option>
+                            <option value="12">Dezembro</option>
+
+                        </select>
+                    </div>*@
+
+                        <hr />
+
+                        <div class="btn-request-form pt-4">
+                            <button type="submit" class="btn btn-primary">@(
+                            editMode ? "Salvar" : "Cadastrar"
+                            )</button>
+                            <button onclick="location.href='@Url.Action("Index")'" type="button" class="btn btn-primary btn-primary-outline">Voltar</button>
+                        </div>
+                    </form>
+                </div>
+                @*  <div class="col-two">
+                <img src="~/imgs/form-fuel.svg" alt="">
+            </div>*@
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="box-form">
+            <div class="box-form-content">
+                <div class="col-one">
+                    <div class="box-title mb-3">
+                        <div class="box-sub-title pb-1">
+                            <p>Nenhuma cota Cadastrada. Contacte um administrador para cadastrar uma cota</p>
+                        </div>
+                        </div>
+                        </div>
+            </div>
+        </div>
+        
+    }
+
+</section>
+
+<script>
+
+</script>

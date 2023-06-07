@@ -1,0 +1,149 @@
+﻿@using AlesCotas.Application.Dto
+@using AlesCotas.Domain.Entities
+@using AlesCotas.Domain.Enum
+@using AlesCotas.Infra.CrossCutting.Utils.Extensions
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<Usuario> SignInManager
+@inject UserManager<Usuario> UserManager
+
+@model MovimentoConta
+
+@{
+    bool editMode = Model?.Id > 0;
+    ViewData["Title"] = (editMode ? "Editar" : "Novo") + " Movimento de Conta";
+    var naturezaMovimentos = Enum.GetValues(typeof(ENaturezaMovimento));
+    var tiposEnum = Enum.GetValues(typeof(ETipoMovimento));
+    List<GabineteDto> gabientes = ViewBag.gabinetes;
+    List<ETipoMovimento> tipos = new List<ETipoMovimento>();
+
+    foreach (var t in tiposEnum)
+    {
+        if (!editMode || (ETipoMovimento)t == Model.Tipo)
+            tipos.Add((ETipoMovimento)t);
+    }
+
+
+    if (!editMode)
+        Model.Tipo = ETipoMovimento.ItemAjuste;
+
+    var user = await UserManager.GetUserAsync(User);
+    var roles = (await UserManager.GetRolesAsync(user)).Select(x => Enum.Parse(typeof(EUsuarioPerfil), x)).OrderBy(x => x).Cast<EUsuarioPerfil>();
+
+    var allowTipo = (!editMode && roles.Any(x => x.Equals(EUsuarioPerfil.Administrador)));
+}
+
+<section class="edit-form">
+    <div class="back-btn">
+        <button type="button" onclick="location.href='@Url.Action("Index","Extrato")'"><img src="~/imgs/arrow.svg" alt="" srcset=""></button>
+        <h4>@ViewData["Title"]</h4>
+    </div>
+    <span class="line"></span>
+
+    <div class="box-form">
+        <div class="box-form-content">
+            <div class="col-one">
+                <form asp-action="Save">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" asp-for="Id" />
+                    <div class="row">
+                        <div class="form-group mb-3 col-12 col-md-12 col-lg-12 col-xl-12">
+                            <label>Gabinete</label>
+                            <select asp-for="GabineteId" class="form-select" aria-label="MovimentoConta">
+                                <option value="" selected>Selecione um Gabinete</option>
+                                @foreach (var p in gabientes.Where(x => x.Ativo))
+                                {
+                                    <option value="@p.Id">@p.Name @(
+                                                  p.SaldoDisponivel?.ToString("N2")
+                                                  )</option>
+                                }
+                                @foreach (var p in gabientes.Where(x => !x.Ativo))
+                                {
+                                    <option value="@p.Id" disabled>@p.Name</option>
+                                }
+                            </select>
+                            <span asp-validation-for="GabineteId" class="text-danger"></span>
+                        </div>
+
+                        @if (allowTipo)
+                        {
+                            <div class="form-group mb-3 col-12 col-md-12 col-lg-12 col-xl-6">
+                                <label for="inputEmail4">Tipo do Movimento</label>
+                                <select asp-for="Tipo" class="form-select">
+                                  <option value="@ETipoMovimento.Cota">@ETipoMovimento.Cota.GetEnumDescription()</option>
+                                  <option value="@ETipoMovimento.ItemAjuste">@ETipoMovimento.ItemAjuste.GetEnumDescription()</option>
+
+                                  @if (editMode)
+                                    {
+                                        <option disabled value="@ETipoMovimento.Solicitacao">@ETipoMovimento.Solicitacao.GetEnumDescription()</option>
+                                        //<option disabled value="@ETipoMovimento.TransferenciaSaldo">@ETipoMovimento.TransferenciaSaldo.GetEnumDescription()</option>
+                                    }
+                                    
+                                </select>
+                                <span asp-validation-for="Tipo" class="text-danger"></span>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="form-group mb-3 col-12 col-md-12 col-lg-12 col-xl-6">
+                                <label for="inputEmail4">Tipo do Movimento</label>
+                                <input asp-for="Tipo" class="form-control" hidden />
+                                <span class="form-control">@Model.Tipo.GetEnumDescription()</span>
+                            </div>
+
+                        }
+
+
+
+                        <div class="form-group mb-3 col-12 col-md-12 col-lg-12 col-xl-6">
+                            <label asp-for="DataMovimento" class="control-label">Data Movimento</label>
+                            <input type="date" asp-for="DataMovimento" class="form-control" />
+                            <span asp-validation-for="DataMovimento" class="text-danger"></span>
+                        </div>
+                        @if (editMode && Model.Tipo == ETipoMovimento.Cota)
+                        {
+                            <div class="form-group mb-3 col-12 col-md-12 col-lg-12 col-xl-6">
+                                <label asp-for="DataReferenciaCota" class="control-label">Data Referência da Cota</label>
+                                <input readonly type="date" asp-for="DataReferenciaCota" class="form-control" />
+
+                            </div>
+                        }
+
+                        <div class="form-group mb-3 col-12 col-md-12 col-lg-12 col-xl-6">
+                            <label for="inputEmail4">Natureza do Movimento</label>
+                            <select asp-for="NaturezaMovimento" class="form-select" aria-label="Perfil do usuário">
+                                @foreach (int n in naturezaMovimentos)
+                                {
+                                    <option value="@((ENaturezaMovimento)n)"> @(
+                                      ((ENaturezaMovimento)n).GetEnumDescription()
+                                      ) </option>
+                                }
+                            </select>
+                            <span asp-validation-for="NaturezaMovimento" class="text-danger"></span>
+                        </div>
+                        <div class="form-group mb-3 col-12 col-md-12 col-lg-12 col-xl-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="Valor">Valor</label>
+                                <input asp-for="Valor" type="number" class="form-control text-right" step="0.01" placeholder="Digite o valor">
+                                <span asp-validation-for="Valor" class="text-danger"></span>
+                            </div>
+                        </div>
+
+
+                        <div class="form-group mb-3 col-12 col-md-12 col-lg-12">
+                            <label asp-for="Descricao" class="control-label">Descrição</label>
+                            <textarea rows="5" asp-for="Descricao" class="form-control"></textarea>
+                            <span asp-validation-for="Descricao" class="text-danger"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                    <div class="btn-request-form pt-4">
+                        <button type="submit" class="btn btn-primary">@(editMode ? "Salvar" : "Cadastrar")</button>
+                        <button onclick="location.href='@Url.Action("Index","Extrato")'" type="button" class="btn btn-primary btn-primary-outline">Voltar</button>
+                    </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>

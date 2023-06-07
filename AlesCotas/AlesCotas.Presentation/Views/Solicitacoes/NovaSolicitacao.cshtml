@@ -1,0 +1,981 @@
+﻿@using AlesCotas.Application.Dto
+@using AlesCotas.Application.Models
+@using AlesCotas.Domain.Entities
+@using AlesCotas.Domain.Enum
+@using AlesCotas.Infra.CrossCutting.Utils.Extensions
+@model NovaSolicitacaoModel
+@{
+    bool editMode = Model?.Solicitacao?.Id > 0;
+    Usuario user = ViewBag.user;
+    bool gabineteMode = user.Role == EUsuarioPerfil.Gabinete;
+    ProdutoTipoDto produtoTipo = ViewBag.produtoTipo;
+    Model.ProdutoTipoId = produtoTipo.Id;
+    IEnumerable<ProdutoDto> itens = ViewBag.itens;
+    IEnumerable<GabineteDto> gabinetes = ViewBag.gabinetes;
+    ViewData["Title"] = (editMode ? "Editar" : "Nova") + " Solicitação de " + produtoTipo?.Name;
+
+    ProdutoTipoUsuarioPerfilDto perfil = produtoTipo.Usuarios.FirstOrDefault(x => x.Perfil.Equals(user.Role));
+
+
+    Model.Solicitacao.AprovacaoAutomatica = perfil.PermiteAprovar && produtoTipo.PermitirRecorrencia;
+
+    GabineteDto gabinete = gabinetes.FirstOrDefault(x => x.Id.Equals(user.GabineteId));
+
+    if (gabineteMode)
+    {
+        Model.Gabinetes = new List<int>(1) { user.GabineteId.Value };
+    }
+
+    @if (produtoTipo.PermitirApenasUmItem && Model.Solicitacao.Items.Count <=0)
+    {
+        Model.Solicitacao.Items.Add(new SolicitacaoItem { });
+    }
+
+}
+<style>
+    .chosen-container {
+        width: 100% !important;
+    }
+
+    .box-btn-add {
+        display: flex;
+        align-items: center;
+    }
+
+
+    .chosen-container-multi .chosen-choices {
+        border-radius: 0.5rem !important;
+        padding: .375rem 2.25rem .375rem .75rem;
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+    }
+
+</style>
+<section class="request-form">
+    <div class="back-btn">
+        <button type="button" onclick="location.href='@Url.Action("Index", "Solicitacoes", new { ProdutoTipoId=produtoTipo.Id })'"><img src="~/imgs/arrow.svg" alt="" srcset=""></button>
+        <h4>@ViewData["Title"]</h4>
+    </div>
+    <span class="line"></span>
+    <div class="box-form">
+        <div class="box-form-content">
+            <div class="col-one">
+
+                <div class="box-title mb-3">
+                    <h4>Nova Solicitação</h4>
+                    @if (gabineteMode)
+                    {
+                        <p>@(gabinete.Name)</p>
+                        <p>Saldo: @(gabinete.SaldoDisponivel?.ToString("N2"))</p>
+                    }
+                </div>
+                <form asp-action="SalvarNovaSolicitacao" enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" asp-for="Solicitacao.Id" />
+                    <input type="hidden" asp-for="Solicitacao.ProdutoTipoId" />
+                    <input type="hidden" asp-for="ProdutoTipoId" />
+
+
+
+                    @if (gabineteMode)
+                    {
+                        <input type="hidden" asp-for="Gabinetes[0]" />
+                    }
+                    else
+                    {
+                        <hr />
+                        <div class="form-group mb-3 col-12 col-md-12 col-lg-12 w-100">
+                            <label for="">Gabinetes</label><br />
+
+                            <small class="text-muted">Selecione um ou mais gabinetes para uma solicitação</small>
+
+
+                            <div class="w-100">
+                                <select asp-for="Gabinetes" class="form-select chosen w-100" multiple aria-label="Gabinetes">
+                                    @foreach (var p in gabinetes)
+                                    {
+
+                                        <option id="@p.Id" value="@p.Id">@(p.Name + " (Disp. " + p.SaldoDisponivel?.ToString("N2") + ")" )</option>
+
+                                    }
+                                </select>
+                                <span asp-validation-for="Gabinetes" class="text-danger"></span>
+                            </div>
+                        </div>
+                    }
+
+                    @if (produtoTipo.PermitirRecorrencia)
+                    {
+                        <hr />
+                        <div class="row">
+                            <h6>Recorrência</h6>
+                            <div class="form-group mb-3 col-4">
+                                <label for="">Início</label>
+                                <input type="month" asp-for="RecorrenciaInicio" min="@DateTime.Now.ToString("yyyy-MM")" max="@DateTime.Now.Year.ToString("0000")-12" class="form-control" id="recorrencia_inicio" onchange="setMinDataFinal('recorrencia')" />
+                                <span asp-validation-for="RecorrenciaInicio" class="text-danger"></span>
+                            </div>
+                            <div class="form-group mb-3 col-4">
+                                <label for="">Fim</label>
+                                <input type="month" asp-for="RecorrenciaFim" min="@DateTime.Now.ToString("yyyy-MM")" max="@DateTime.Now.Year.ToString("0000")-12" class="form-control" id="recorrencia_fim" onchange="setMaxDataInicial('recorrencia')" />
+                                <span asp-validation-for="RecorrenciaFim" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                    }
+                    else
+                    {
+                        <input type="hidden" asp-for="RecorrenciaInicio" class="form-control" />
+                        <input type="hidden" asp-for="RecorrenciaFim" class="form-control" />
+                    }
+
+
+                    @if (Model.Solicitacao.Campos.Where(x => x.Posicao == 0).Count() > 0)
+                    {
+                        @foreach (var group in Model.Solicitacao.Campos.Where(x => x.Posicao == 0).Select(x => x.Grupo).Distinct())
+                        {
+                            <hr />
+                            <h6>@group</h6>
+                            <div class="">
+                                <div class="row">
+                                    @for (int i = 0; i < Model.Solicitacao.Campos.Count; i++)
+                                    {
+                                        @if (Model.Solicitacao.Campos[i].Grupo == group && Model.Solicitacao.Campos[i].Posicao == 0)
+                                        {
+
+                                            <input type="hidden" asp-for="Solicitacao.Campos[i].TipoCampo" />
+                                            @if (!String.IsNullOrWhiteSpace(Model.Solicitacao.Campos[i].Opcoes))
+                                            {
+                                                <input type="hidden" asp-for="Solicitacao.Campos[i].Opcoes" />
+                                            }
+                                            <input type="hidden" asp-for="Solicitacao.Campos[i].Grupo" />
+                                            <input type="hidden" asp-for="Solicitacao.Campos[i].Name" />
+                                            <input type="hidden" asp-for="Solicitacao.Campos[i].Ordem" />
+                                            <input type="hidden" asp-for="Solicitacao.Campos[i].Largura" />
+                                            <input type="hidden" asp-for="Solicitacao.Campos[i].Obrigatorio" />
+                                            <input type="hidden" asp-for="Solicitacao.Campos[i].Posicao" />
+
+                                            @if (Model.Solicitacao.Campos[i].TipoCampo == ETipoCampo.ListaSuspensa)
+                                            {
+                                                <div class="form-group mb-3 col-12 @("col-md-"+Model.Solicitacao.Campos[i].Largura)">
+                                                    <label for="">@Model.Solicitacao.Campos[i].Name</label>
+                                                    <select asp-for="Solicitacao.Campos[i].Valor" class="form-select">
+                                                        <option value="" selected>[Selecione uma opção]</option>
+                                                        @foreach (var p in Model.Solicitacao.Campos[i].Opcoes.Split(','))
+                                                        {
+                                                            <option value="@p">@p</option>
+                                                        }
+                                                    </select>
+                                                    <span asp-validation-for="Solicitacao.Campos[i].Valor" class="text-danger"></span>
+                                                </div>
+                                            }
+                                            else if (Model.Solicitacao.Campos[i].TipoCampo == ETipoCampo.TextoLongo)
+                                            {
+                                                <div class="form-group mb-3 col-12 @("col-md-"+Model.Solicitacao.Campos[i].Largura)">
+                                                    <label for="">@Model.Solicitacao.Campos[i].Name</label>
+                                                    <textarea asp-for="Solicitacao.Campos[i].Valor" class="form-control"
+                                                              rows="5"></textarea>
+                                                    <span asp-validation-for="Solicitacao.Campos[i].Valor" class="text-danger"></span>
+                                                </div>
+                                            }
+                                            else if (Model.Solicitacao.Campos[i].TipoCampo == ETipoCampo.TextoSimples)
+                                            {
+                                                <div class="form-group mb-3 col-12 @("col-md-"+Model.Solicitacao.Campos[i].Largura)">
+                                                    <label for="">@Model.Solicitacao.Campos[i].Name</label>
+                                                    <input type="text" asp-for="Solicitacao.Campos[i].Valor" class="form-control" />
+                                                    <span asp-validation-for="Solicitacao.Campos[i].Valor" class="text-danger"></span>
+                                                </div>
+                                            }
+                                            else if (Model.Solicitacao.Campos[i].TipoCampo == ETipoCampo.DataHora)
+                                            {
+                                                <div class="form-group mb-3 col-12 @("col-md-"+Model.Solicitacao.Campos[i].Largura)">
+                                                    <label class="control-label">@Model.Solicitacao.Campos[i].Name</label>
+                                                    <input type="datetime-local" asp-for="Solicitacao.Campos[i].DateTimeValor" class="form-control" />
+                                                    <span asp-validation-for="Solicitacao.Campos[i].Valor" class="text-danger"></span>
+                                                </div>
+                                            }
+                                            else if (Model.Solicitacao.Campos[i].TipoCampo == ETipoCampo.IntervaloDatas || Model.Solicitacao.Campos[i].TipoCampo == ETipoCampo.IntervaloDatasHoras)
+                                            {
+                                                <div class="form-row form-inline d-inline-flex mb-3 col-12">
+                                                    <div class="form-group col-5">
+                                                        <label class="control-label text-nowrap">@Model.Solicitacao.Campos[i].Name</label>
+                                                        <input type="@(Model.Solicitacao.Campos[i].TipoCampo == ETipoCampo.IntervaloDatas ? "date" : "datetime-local")" asp-for="Solicitacao.Campos[i].IntervaloDatas[0]" class="form-control" id="@(Model.Solicitacao.Campos[i].Name+"_inicio")" onchange="periodoTexto('@Model.Solicitacao.Campos[i].Name');setMinDataFinal('@Model.Solicitacao.Campos[i].Name')" max="@(Model.Solicitacao.Campos[i].IntervaloDatas[1].HasValue ? Model.Solicitacao.Campos[i].IntervaloDatas[1].Value.ToString("yyyy-MM-dd") : "" )" />
+                                                        <span asp-validation-for="Solicitacao.Campos[i].Valor" class="text-danger"></span>
+                                                    </div>
+                                                    <div class="form-group col-1 ms-3 me-3">
+                                                        <label class="control-label text-nowrap"> </label>
+                                                        <span class="form-control border-0 text-center"> a </span>
+                                                    </div>
+                                                    <div class="form-group col-5">
+                                                        <label class="control-label text-nowrap"> </label>
+                                                        <input type="@(Model.Solicitacao.Campos[i].TipoCampo == ETipoCampo.IntervaloDatas ? "date" : "datetime-local")" asp-for="Solicitacao.Campos[i].IntervaloDatas[1]" class="form-control" id="@(Model.Solicitacao.Campos[i].Name+"_fim")" onchange="periodoTexto('@Model.Solicitacao.Campos[i].Name');setMaxDataInicial('@Model.Solicitacao.Campos[i].Name')" min="@(Model.Solicitacao.Campos[i].IntervaloDatas[0].HasValue ? Model.Solicitacao.Campos[i].IntervaloDatas[0].Value.ToString("yyyy-MM-dd") : "" )" />
+                                                        <span asp-validation-for="Solicitacao.Campos[i].Valor" class="text-danger"></span>
+                                                    </div>
+                                                    <div class="form-group col-1 ms-3 me-3">
+                                                        <label class="control-label text-nowrap"> </label>
+                                                        <span id="@(Model.Solicitacao.Campos[i].Name + "_dias")" class="form-control border-0  text-muted"></span>
+                                                    </div>
+                                                </div>
+                                            }
+                                            else if (Model.Solicitacao.Campos[i].TipoCampo == ETipoCampo.Data)
+                                            {
+                                                <div class="form-group mb-3 col-12 @("col-md-"+Model.Solicitacao.Campos[i].Largura)">
+                                                    <label for="">@Model.Solicitacao.Campos[i].Name</label>
+                                                    <input type="date" asp-for="Solicitacao.Campos[i].Valor" class="form-control" />
+                                                    <span asp-validation-for="Solicitacao.Campos[i].Valor" class="text-danger"></span>
+                                                </div>
+                                            }
+                                            else if (Model.Solicitacao.Campos[i].TipoCampo == ETipoCampo.NumeroInteiro)
+                                            {
+                                                <div class="form-group mb-3 col-12 @("col-md-"+Model.Solicitacao.Campos[i].Largura)">
+                                                    <label for="">@Model.Solicitacao.Campos[i].Name</label>
+                                                    <input type="number" asp-for="Solicitacao.Campos[i].Valor" class="form-control" />
+                                                    <span asp-validation-for="Solicitacao.Campos[i].Valor" class="text-danger"></span>
+                                                </div>
+                                            }
+                                            else if (Model.Solicitacao.Campos[i].TipoCampo == ETipoCampo.NumeroDecimal)
+                                            {
+                                                <div class="form-group mb-3 col-12 @("col-md-"+Model.Solicitacao.Campos[i].Largura)">
+                                                    <label for="">@Model.Solicitacao.Campos[i].Name</label>
+                                                    <input type="number" step="0.01" asp-for="Solicitacao.Campos[i].Valor" class="form-control" />
+                                                    <span asp-validation-for="Solicitacao.Campos[i].Valor" class="text-danger"></span>
+                                                </div>
+                                            }
+                                            else if (Model.Solicitacao.Campos[i].TipoCampo == ETipoCampo.Moeda)
+                                            {
+                                                <div class="form-group mb-3 col-12 @("col-md-"+Model.Solicitacao.Campos[i].Largura)">
+                                                    <label for="">@Model.Solicitacao.Campos[i].Name (R$)</label>
+                                                    <input type="number" step="0.01" asp-for="Solicitacao.Campos[i].Valor" class="form-control" />
+                                                    <span asp-validation-for="Solicitacao.Campos[i].Valor" class="text-danger"></span>
+                                                </div>
+                                            }
+                                            else if (Model.Solicitacao.Campos[i].TipoCampo == ETipoCampo.SimNao)
+                                            {
+                                                <div class="form-group mb-3 col-12 @("col-md-"+Model.Solicitacao.Campos[i].Largura)">
+
+                                                    @*<input type="checkbox" asp-for="Solicitacao.Campos[i].BoolValor" class="form-control" />*@
+                                                    @Html.CheckBoxFor(m => m.Solicitacao.Campos[i].BoolValor)  <label for="">@Model.Solicitacao.Campos[i].Name</label>
+                                                    <span asp-validation-for="Solicitacao.Campos[i].Valor" class="text-danger"></span>
+                                                </div>
+                                            }
+                                            else if (Model.Solicitacao.Campos[i].TipoCampo == ETipoCampo.ListaOpcoes)
+                                            {
+                                                <div class="mb-3  col-12 @("col-md-"+Model.Solicitacao.Campos[i].Largura)">
+                                                    <label class="form-check-label" for="">@Model.Solicitacao.Campos[i].Name</label>
+
+                                                    <div class="d-flex ">
+                                                        @foreach (var p in Model.Solicitacao.Campos[i].Opcoes.Split(','))
+                                                        {
+                                                            @if (Model.Solicitacao.Campos[i].Obrigatorio)
+                                                            {
+                                                                if (String.IsNullOrWhiteSpace(Model.Solicitacao.Campos[i].Valor))
+                                                                    Model.Solicitacao.Campos[i].Valor = p;
+                                                            }
+                                                            <div class="form-check col-4">
+
+                                                                @Html.RadioButtonFor(m => m.Solicitacao.Campos[i].Valor, p, new { @class="form-check-input"  } )<label class="form-check-label" for="flexRadioDefault2">
+                                                                    @p
+                                                                </label>
+
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                    <span asp-validation-for="Solicitacao.Campos[i].Valor" class="text-danger"></span>
+                                                </div>
+                                            }
+
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        
+                    }
+                    <hr />
+
+                    @*<div class="form-group mb-3 col-12 col-md-12 col-lg-5">
+                    <label for="">Itens</label><br />
+                    <select class="form-select chosen" multiple aria-label="Itens">
+                    @foreach (var p in itens)
+                    {
+                    <option value="@p.Id">@p.Name</option>
+                    }
+                    </select>
+                    </div>*@
+
+                    @if (produtoTipo.PermitirApenasUmItem)
+                    {
+                        <div class="row">
+                            <div class="form-group mb-3 col-12">
+                                <label>Selecione um item</label>
+                                <select id="itemSelecionado" class="form-select copy"
+                                     asp-for="Solicitacao.Items[0].ProdutoId"  asp-items="@(new SelectList(ViewBag.Itens, "Id", "Name"))" onchange="onSelectChange()"></select>
+
+                            </div>
+
+
+                            <div class="form-group mb-3 col-12 col-md-12 col-lg-12 col-xl-4">
+                                <label id="labelQtd">Quantidade</label>
+                                <input id="qtd" type="number" asp-for="Solicitacao.Items[0].QuantidadeSolicitada"
+                                       class="form-control" value="1" placeholder="0" step="@(produtoTipo.IncrementoQuantidade)"
+                                       pattern="\d+(\.\d{1,2})?"
+                                       oninput="calcularTotal()" />
+                            </div>
+                            <div class="form-group mb-3 col-6 col-md-6 col-lg-6 col-xl-3">
+
+
+                                <label>Valor Unitário @(produtoTipo.HabilitaValoresDolar ? "US$" : "R$")</label>
+                                <input asp-for="Solicitacao.Items[0].Valor" type="number" class="form-control" id="valorUnitario" pattern="\d+(\.\d{1,2})?" oninput="calcularTotal()" step="0.01" readonly />@* disabled="@produtoTipo.HabilitaValoresDolar" />*@
+                            </div>
+                            <div class="form-group mb-3 col-6 col-md-6 col-lg-6 col-xl-3">
+                                <label>Valor Total @(produtoTipo.HabilitaValoresDolar ? "US$" : "R$")</label>
+                                <input type="number" class="form-control" id="valorTotal" pattern="\d+(\.\d{1,2})?" oninput="calcularQuantidade()" onblur="arredondaTotal()" readonly="@produtoTipo.HabilitaValoresDolar" />
+                            </div>
+                            <span asp-validation-for="Solicitacao.Items" class="text-danger"></span>
+                        </div>
+                    }
+                    else
+                    {
+                    <div class="row">
+                        <div class="form-group mb-3 col-12">
+                            <label>Selecione um item</label>
+                            <select id="itemSelecionado" class="form-select copy"
+                                    asp-items="@(new SelectList(ViewBag.Itens, "Id", "Name"))" onchange="onSelectChange()"></select>
+
+                        </div>
+
+
+                        <div class="form-group mb-3 col-12 col-md-12 col-lg-12 col-xl-4">
+                            <label id="labelQtd">Quantidade</label>
+                                <input id="qtd" type="number" formnovalidate
+                                   class="form-control" value="1" placeholder="0" step="@(produtoTipo.IncrementoQuantidade)"
+                                       pattern="\d+(\.\d{1,2})?"
+                                   oninput="calcularTotal()" />
+                        </div>
+                        <div class="form-group mb-3 col-6 col-md-6 col-lg-6 col-xl-3">
+                            <label>Valor Unitário @(produtoTipo.HabilitaValoresDolar ? "US$" : "R$")</label>
+                                <input type="number" class="form-control" id="valorUnitario" pattern="\d+(\.\d{1,2})?" oninput="calcularTotal()" step="0.01" formnovalidate readonly />@* disabled="@produtoTipo.HabilitaValoresDolar" />*@
+                        </div>
+                        <div class="form-group mb-3 col-6 col-md-6 col-lg-6 col-xl-3">
+                            <label>Valor Total @(produtoTipo.HabilitaValoresDolar ? "US$" : "R$")</label>
+                                <input type="number" class="form-control" id="valorTotal" oninput="calcularQuantidade()" pattern="\d+(\.\d{1,2})?" onblur="arredondaTotal()" readonly="@produtoTipo.HabilitaValoresDolar" />
+                        </div>
+                        <div class="box-btn-add col-12 col-md-12 col-lg-2">
+                            <button id="btnAdd" type="button" class="btn-entidde-add btn-add">
+                                <div class="line-vertical"></div>
+                                <div class="line-horizontal"></div>
+                            </button>
+                        </div>
+
+                        <div id="lista" class="mb-3 row row-cols-2 listar">
+                            <!--Lista-->
+                        </div>
+
+                        <span asp-validation-for="Solicitacao.Items" class="text-danger"></span>
+                    </div>
+                    }
+
+                    @if (Model.Solicitacao.Campos.Where(x => x.Posicao == 0).Count() > 0)
+                    {
+                        @foreach (var group in Model.Solicitacao.Campos.Where(x => x.Posicao == 1).Select(x => x.Grupo).Distinct())
+                        {
+                            <hr />
+                            <h6>@group</h6>
+                            <div class="">
+                                <div class="row">
+                                    @for (int i = 0; i < Model.Solicitacao.Campos.Count; i++)
+                                    {
+                                        @if (Model.Solicitacao.Campos[i].Grupo == group && Model.Solicitacao.Campos[i].Posicao == 1)
+                                        {
+
+                                            <input type="hidden" asp-for="Solicitacao.Campos[i].TipoCampo" />
+                                            @if (!String.IsNullOrWhiteSpace(Model.Solicitacao.Campos[i].Opcoes))
+                                            {
+                                                <input type="hidden" asp-for="Solicitacao.Campos[i].Opcoes" />
+                                            }
+                                            <input type="hidden" asp-for="Solicitacao.Campos[i].Grupo" />
+                                            <input type="hidden" asp-for="Solicitacao.Campos[i].Name" />
+                                            <input type="hidden" asp-for="Solicitacao.Campos[i].Ordem" />
+                                            <input type="hidden" asp-for="Solicitacao.Campos[i].Largura" />
+                                            <input type="hidden" asp-for="Solicitacao.Campos[i].Obrigatorio" />
+                                            <input type="hidden" asp-for="Solicitacao.Campos[i].Posicao" />
+
+                                            @if (Model.Solicitacao.Campos[i].TipoCampo == ETipoCampo.ListaSuspensa)
+                                            {
+                                                <div class="form-group mb-3 col-12 @("col-md-"+Model.Solicitacao.Campos[i].Largura)">
+                                                    <label for="">@Model.Solicitacao.Campos[i].Name</label>
+                                                    <select asp-for="Solicitacao.Campos[i].Valor" class="form-select">
+                                                        <option value="" selected>[Selecione uma opção]</option>
+                                                        @foreach (var p in Model.Solicitacao.Campos[i].Opcoes.Split(','))
+                                                        {
+                                                            <option value="@p">@p</option>
+                                                        }
+                                                    </select>
+                                                    <span asp-validation-for="Solicitacao.Campos[i].Valor" class="text-danger"></span>
+                                                </div>
+                                            }
+                                            else if (Model.Solicitacao.Campos[i].TipoCampo == ETipoCampo.TextoLongo)
+                                            {
+                                                <div class="form-group mb-3 col-12 @("col-md-"+Model.Solicitacao.Campos[i].Largura)">
+                                                    <label for="">@Model.Solicitacao.Campos[i].Name</label>
+                                                    <textarea asp-for="Solicitacao.Campos[i].Valor" class="form-control"
+                    rows="5"></textarea>
+                                                    <span asp-validation-for="Solicitacao.Campos[i].Valor" class="text-danger"></span>
+                                                </div>
+                                            }
+                                            else if (Model.Solicitacao.Campos[i].TipoCampo == ETipoCampo.TextoSimples)
+                                            {
+                                                <div class="form-group mb-3 col-12 @("col-md-"+Model.Solicitacao.Campos[i].Largura)">
+                                                    <label for="">@Model.Solicitacao.Campos[i].Name</label>
+                                                    <input type="text" asp-for="Solicitacao.Campos[i].Valor" class="form-control" />
+                                                    <span asp-validation-for="Solicitacao.Campos[i].Valor" class="text-danger"></span>
+                                                </div>
+                                            }
+                                            else if (Model.Solicitacao.Campos[i].TipoCampo == ETipoCampo.DataHora)
+                                            {
+                                                <div class="form-group mb-3 col-12 @("col-md-"+Model.Solicitacao.Campos[i].Largura)">
+                                                    <label class="control-label">@Model.Solicitacao.Campos[i].Name</label>
+                                                    <input type="datetime-local" asp-for="Solicitacao.Campos[i].DateTimeValor" class="form-control" />
+                                                    <span asp-validation-for="Solicitacao.Campos[i].Valor" class="text-danger"></span>
+                                                </div>
+                                            }
+                                            else if (Model.Solicitacao.Campos[i].TipoCampo == ETipoCampo.IntervaloDatas || Model.Solicitacao.Campos[i].TipoCampo == ETipoCampo.IntervaloDatasHoras)
+                                            {
+                                                <div class="form-row form-inline d-inline-flex mb-3 col-12">
+                                                    <div class="form-group col-5">
+                                                        <label class="control-label text-nowrap">@Model.Solicitacao.Campos[i].Name</label>
+                                                        <input type="@(Model.Solicitacao.Campos[i].TipoCampo == ETipoCampo.IntervaloDatas ? "date" : "datetime-local")" asp-for="Solicitacao.Campos[i].IntervaloDatas[0]" class="form-control" id="@(Model.Solicitacao.Campos[i].Name+"_inicio")" onchange="periodoTexto('@Model.Solicitacao.Campos[i].Name');setMinDataFinal('@Model.Solicitacao.Campos[i].Name')" max="@(Model.Solicitacao.Campos[i].IntervaloDatas[1].HasValue ? Model.Solicitacao.Campos[i].IntervaloDatas[1].Value.ToString("yyyy-MM-dd") : "" )" />
+                                                        <span asp-validation-for="Solicitacao.Campos[i].Valor" class="text-danger"></span>
+                                                    </div>
+                                                    <div class="form-group col-1 ms-3 me-3">
+                                                        <label class="control-label text-nowrap"> </label>
+                                                        <span class="form-control border-0 text-center"> a </span>
+                                                    </div>
+                                                    <div class="form-group col-5">
+                                                        <label class="control-label text-nowrap"> </label>
+                                                        <input type="@(Model.Solicitacao.Campos[i].TipoCampo == ETipoCampo.IntervaloDatas ? "date" : "datetime-local")" asp-for="Solicitacao.Campos[i].IntervaloDatas[1]" class="form-control" id="@(Model.Solicitacao.Campos[i].Name+"_fim")" onchange="periodoTexto('@Model.Solicitacao.Campos[i].Name');setMaxDataInicial('@Model.Solicitacao.Campos[i].Name')" min="@(Model.Solicitacao.Campos[i].IntervaloDatas[0].HasValue ? Model.Solicitacao.Campos[i].IntervaloDatas[0].Value.ToString("yyyy-MM-dd") : "" )" />
+                                                        <span asp-validation-for="Solicitacao.Campos[i].Valor" class="text-danger"></span>
+                                                    </div>
+                                                    <div class="form-group col-1 ms-3 me-3">
+                                                        <label class="control-label text-nowrap"> </label>
+                                                        <span id="@(Model.Solicitacao.Campos[i].Name + "_dias")" class="form-control border-0  text-muted"></span>
+                                                    </div>
+                                                </div>
+                                            }
+                                            else if (Model.Solicitacao.Campos[i].TipoCampo == ETipoCampo.Data)
+                                            {
+                                                <div class="form-group mb-3 col-12 @("col-md-"+Model.Solicitacao.Campos[i].Largura)">
+                                                    <label for="">@Model.Solicitacao.Campos[i].Name</label>
+                                                    <input type="date" asp-for="Solicitacao.Campos[i].Valor" class="form-control" />
+                                                    <span asp-validation-for="Solicitacao.Campos[i].Valor" class="text-danger"></span>
+                                                </div>
+                                            }
+                                            else if (Model.Solicitacao.Campos[i].TipoCampo == ETipoCampo.NumeroInteiro)
+                                            {
+                                                <div class="form-group mb-3 col-12 @("col-md-"+Model.Solicitacao.Campos[i].Largura)">
+                                                    <label for="">@Model.Solicitacao.Campos[i].Name</label>
+                                                    <input type="number" asp-for="Solicitacao.Campos[i].Valor" class="form-control" />
+                                                    <span asp-validation-for="Solicitacao.Campos[i].Valor" class="text-danger"></span>
+                                                </div>
+                                            }
+                                            else if (Model.Solicitacao.Campos[i].TipoCampo == ETipoCampo.NumeroDecimal)
+                                            {
+                                                <div class="form-group mb-3 col-12 @("col-md-"+Model.Solicitacao.Campos[i].Largura)">
+                                                    <label for="">@Model.Solicitacao.Campos[i].Name</label>
+                                                    <input type="number" step="0.01" asp-for="Solicitacao.Campos[i].Valor" class="form-control" />
+                                                    <span asp-validation-for="Solicitacao.Campos[i].Valor" class="text-danger"></span>
+                                                </div>
+                                            }
+                                            else if (Model.Solicitacao.Campos[i].TipoCampo == ETipoCampo.Moeda)
+                                            {
+                                                <div class="form-group mb-3 col-12 @("col-md-"+Model.Solicitacao.Campos[i].Largura)">
+                                                    <label for="">@Model.Solicitacao.Campos[i].Name (R$)</label>
+                                                    <input type="number" step="0.01" asp-for="Solicitacao.Campos[i].Valor" class="form-control" />
+                                                    <span asp-validation-for="Solicitacao.Campos[i].Valor" class="text-danger"></span>
+                                                </div>
+                                            }
+                                            else if (Model.Solicitacao.Campos[i].TipoCampo == ETipoCampo.SimNao)
+                                            {
+                                                <div class="form-group mb-3 col-12 @("col-md-"+Model.Solicitacao.Campos[i].Largura)">
+
+                                                    @*<input type="checkbox" asp-for="Solicitacao.Campos[i].BoolValor" class="form-control" />*@
+                                                    @Html.CheckBoxFor(m => m.Solicitacao.Campos[i].BoolValor)  <label for="">@Model.Solicitacao.Campos[i].Name</label>
+                                                    <span asp-validation-for="Solicitacao.Campos[i].Valor" class="text-danger"></span>
+                                                </div>
+                                            }
+                                            else if (Model.Solicitacao.Campos[i].TipoCampo == ETipoCampo.ListaOpcoes)
+                                            {
+                                                <div class="mb-3  col-12 @("col-md-"+Model.Solicitacao.Campos[i].Largura)">
+                                                    <label class="form-check-label" for="">@Model.Solicitacao.Campos[i].Name</label>
+
+                                                    <div class="d-flex ">
+                                                        @foreach (var p in Model.Solicitacao.Campos[i].Opcoes.Split(','))
+                                                        {
+                                                            @if (Model.Solicitacao.Campos[i].Obrigatorio)
+                                                            {
+                                                                if (String.IsNullOrWhiteSpace(Model.Solicitacao.Campos[i].Valor))
+                                                                    Model.Solicitacao.Campos[i].Valor = p;
+                                                            }
+                                                            <div class="form-check col-4">
+
+                                                                @Html.RadioButtonFor(m => m.Solicitacao.Campos[i].Valor, p, new { @class="form-check-input"  } )<label class="form-check-label" for="flexRadioDefault2">
+                                                                    @p
+                                                                </label>
+
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                    <span asp-validation-for="Solicitacao.Campos[i].Valor" class="text-danger"></span>
+                                                </div>
+                                            }
+
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+
+                    <hr />
+                    @if (produtoTipo.HabilitaAnexos)
+                    {
+                        <div class="row">
+                            <div class="form-group mb-4">
+                                <label for="">Anexo</label>
+                                @Html.TextBoxFor(model => model.FileAnexo, new {multiple = "multiple",  type = "file", @class = "form-control form-control-file" })
+                                @* <input placeholder="Adicione um arquivo anexo" asp-for="FileAnexo" class="form-control" type="file" />*@
+                            </div>
+
+                        </div>
+                        <hr />
+                    }
+
+                    <div class="form-group mb-4">
+                        <label for="">Observações</label>
+                        <textarea placeholder="Adicione uma observação" asp-for="Solicitacao.Observacoes" class="form-control" cols="30"
+                                  rows="5"></textarea>
+                        <span asp-validation-for="Solicitacao.Observacoes" class="text-danger"></span>
+                    </div>
+
+                    @if (perfil.PermiteAprovar && produtoTipo.PermitirRecorrencia)
+                    {
+                        <hr />
+                        <div class="row">
+                        <div class="form-group mb-3 col-6 col-md-4 col-lg-3">
+                            @Html.CheckBoxFor(m => m.Solicitacao.AprovacaoAutomatica)
+                            <label for="">Aprovação Automática</label>
+                        </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <input type="hidden" asp-for="Solicitacao.AprovacaoAutomatica" />
+                    }
+
+                    <hr />
+                    <div class="row">
+                        @if (produtoTipo.HabilitaValoresDolar)
+                        {
+                            <div class="form-group mb-3 col-12 col-lg-3">
+                                <label id=labelDolar>Total US$</label>
+                                <input id="totalDolar" type="number" step="0.01" class="form-control" readonly />
+
+                                <input type="date" hidden asp-for="Solicitacao.DataCotacao" id="dataCotacao" />
+                            </div>
+
+                            <div class="form-group mb-3 col-12 col-lg-3">
+                                <label id=labelDolar data-toggle="tooltip" title="Data Cotação: (@Model.Solicitacao.DataCotacao?.ToShortDateString())">Cotação</label>
+                                <input type="number" class="form-control" step="0.01" asp-for="Solicitacao.CotacaoDolar" id="cotacaoDolar" oninput="calcularCotacaoPorDolar()" />
+                            </div>
+                        }
+
+                        <div class="form-group mb-3 col-12 col-lg-3">
+                            <label for="">Total R$</label>
+                            <input name="Solicitacao.Total" id="totalSolicitacao" type="number" step="0.01" class="form-control" oninput="calcularCotacaoPorTotal()" readonly="@(!produtoTipo.HabilitaValoresDolar)" />
+                            @*@Html.TextBoxFor(m => m.Solicitacao.Total, new { @class="form-control text-right", @id="totalSolicitacao", @oninput="calcularCotacao()"})*@
+                            @*<input data-val-number-decimal-separator="," id="totalSolicitacao" type="number" step="0.01" asp-for="Solicitacao.Total" class="form-control" />*@
+                        </div>
+        
+                    </div>
+                    <div class="btn-request-form pt-4">
+                        <button type="submit" class="btn btn-primary">@(editMode ? "Salvar" : "Cadastrar")</button>
+                        <button onclick="location.href='@Url.Action("Index", "Solicitacoes", new { ProdutoTipoId=produtoTipo.Id })'" type="button" class="btn btn-primary btn-primary-outline">Voltar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+@section Scripts {
+
+
+    <script>
+
+        $(document).ready(function () {
+            $(".chosen").chosen();
+
+            $("#Gabinetes").click(function () {
+                $(".chosen").chosen("destroy");
+                var chosenHtml = $("#Gabinetes").html();
+                $(".movecontainer").append(chosenHtml);
+                $(".chosen").chosen();
+
+            });
+        });
+
+        $('.Gabinetes').click(function () {
+            //$('ul').html("");
+            $("#Gabinetes").each(function () {
+                if ($(this).is(":checked")) {
+
+                }
+            });
+        });
+
+        // Array de items
+        const items = [];
+
+
+
+
+        // Produtos
+        const produtos = @Html.Raw(Json.Serialize(ViewBag.Itens));
+
+
+        // Botão adicionar
+        const btnAdd = document.getElementById("btnAdd");
+
+        // Lista
+        const lista = document.getElementById("lista");
+        // Inputs
+        const select = document.getElementById("itemSelecionado");
+        const quantidade = document.getElementById("qtd");
+        const valorUnitario = document.getElementById("valorUnitario");
+        const valorTotal = document.getElementById("valorTotal");
+        const totalSolicitacao = document.getElementById("totalSolicitacao");
+        const elementCotacao = document.getElementById("cotacaoDolar");
+        const labelQtd = document.getElementById("labelQtd");
+
+
+
+
+        const model = @Html.Raw(Json.Serialize(Model));
+        if (elementCotacao) {
+            if (model.solicitacao.cotacaoDolar <= 0) {
+                GetCotacao().then(value => {
+                    $('#labelDolar').text("Total em US$ Cotado à " + value.cotacao?.toFixed(2) + " em " + value.dataStr);
+                    elementCotacao.value = value.cotacao?.toFixed(2);
+                    $('#dataCotacao').val(value.data);
+                });
+            }
+        }
+
+
+        const prodTipo = @Html.Raw(Json.Serialize(produtoTipo));
+
+
+       if (!prodTipo.permitirApenasUmItem)
+       {
+          
+          model.solicitacao.items.forEach(x => items.push({ Id: x.produtoId, ValorUnitario: x.valor, QuantidadeSolicitada: x.quantidadeSolicitada, Name: x.produto.name }))
+            atualizarLista();
+
+            btnAdd.addEventListener('click', (e) => {
+                //console.log("Ola mundo", select.options[select.selectedIndex].innerHTML, select.options[select.selectedIndex].value, quantidade.value);
+                addItem();
+                e.stopPropagation();
+            });
+        }
+        else
+        {
+           
+                valorUnitario.value = model.solicitacao.items[0].valor;
+                quantidade.value =  model.solicitacao.items[0].quantidadeSolicitada;
+                valorTotal.value =  (quantidade.value * valorUnitario.value).toFixed(2);
+                valorTotal.setAttribute("step", @(produtoTipo.IncrementoQuantidade) * valorUnitario.value);
+
+               
+            
+        }
+        
+
+        $('#totalSolicitacao').val(model.solicitacao.total);
+        calcularCotacao();
+        // Campo valor medio
+        //const valorMedio = document.getElementById("valorMedio");
+
+       
+
+        function calcularTotal() {
+
+            const total = quantidade.value * valorUnitario.value;// produtos.find(p => p.id === parseInt(select.options[select.selectedIndex].value)).valor;
+            valorTotal.value = total.toFixed(2);
+            
+            valorTotal.setAttribute("step", @(produtoTipo.IncrementoQuantidade) * valorUnitario.value);
+            //console.log(valorTotal.value);
+            //calcularCotacao();
+        @(produtoTipo.PermitirApenasUmItem ? "atualizaTotalSolicitacao(total);" : "");
+        }
+        function calcularQuantidade() {
+
+            const total = valorTotal.value * 1.0;
+            const qtd = total / valorUnitario.value;
+            quantidade.value = qtd.toFixed(2);
+            
+
+            //const total = quantidade.value * valorUnitario.value;// produtos.find(p => p.id === parseInt(select.options[select.selectedIndex].value)).valor;
+            //= total.toFixed(2);
+            //console.log(valorTotal.value);
+            //calcularCotacao();
+
+        @(produtoTipo.PermitirApenasUmItem ? "atualizaTotalSolicitacao(total);" : "");
+        }
+
+        function arredondaTotal()
+        {
+            const qtd = quantidade.value * 1.0;
+            const total = qtd.toFixed(2) * valorUnitario.value;
+            valorTotal.value = (total * 1.0 ).toFixed(2);
+
+        @(produtoTipo.PermitirApenasUmItem ? "atualizaTotalSolicitacao(total);" : "");
+
+        }
+
+
+        function addItem() {
+
+            if (quantidade.value <= 0) {
+                infoSwal("Insira um valor valido para quantidade");
+                return;
+            }
+
+            if (items.findIndex(i => i.id == parseInt(select.options[select.selectedIndex].value)) != -1) {
+                var index = items.findIndex(i => i.id == parseInt(select.options[select.selectedIndex].value));
+
+                items[index].QuantidadeSolicitada += parseInt(quantidade.value);
+                atualizarLista();
+                return;
+            }
+
+            items.push({
+                Id: parseInt(select.options[select.selectedIndex].value),
+                Name: select.options[select.selectedIndex].innerHTML,
+                QuantidadeSolicitada: quantidade.value,
+                ValorUnitario: valorUnitario.value
+            });
+
+            atualizarLista();
+            calcularCotacao();
+
+            //console.log(produtos);
+        };
+        function calcularCotacaoPorTotal() {
+
+            const totalDolar = $('#totalDolar').val();
+            if (totalDolar && totalDolar > 0) {
+                let totalSolicitacao = $('#totalSolicitacao').val();
+                elementCotacao.value = (totalSolicitacao / totalDolar).toFixed(2);
+            }
+
+            //totalSolicitacao = totalSolicitacao.replace(",", ".");
+            //let totalDolar = totalSolicitacao / cotacao;
+            //////console.log(totalDolar);
+            //$('#totalDolar').val(totalDolar.toFixed(2));
+
+        }
+        function calcularCotacao() {
+            //const totalDolar = $('#totalDolar').val();
+            //if (totalDolar > 0) {
+
+            //    let totalSolicitacao = $('#totalSolicitacao').val();
+            //    const cotacao = totalSolicitacao / totalDolar;
+            //    elementCotacao.value = cotacao;
+
+            //    //const cotacao = elementCotacao.value;
+
+
+            //    //let totalSolicitacao = $('#totalSolicitacao').val();
+            //    //totalSolicitacao = totalSolicitacao.replace(",", ".");
+            //    //let totalDolar = totalSolicitacao / cotacao;
+            //    //////console.log(totalDolar);
+            //    //$('#totalDolar').val(totalDolar.toFixed(2));
+            //}
+
+            if (elementCotacao && elementCotacao.value > 0) {
+                const cotacao = elementCotacao.value;
+
+
+                let totalSolicitacao = $('#totalSolicitacao').val();
+                totalSolicitacao = totalSolicitacao.replace(",", ".");
+                let totalDolar = totalSolicitacao / cotacao;
+                ////console.log(totalDolar);
+                $('#totalDolar').val(totalDolar.toFixed(2));
+            }
+        }
+        function calcularCotacaoPorDolar() {
+            if (elementCotacao && elementCotacao.value > 0) {
+                const cotacao = elementCotacao.value;
+                let totalSolicitacao = $('#totalDolar').val();
+                totalSolicitacao = totalSolicitacao.replace(",", ".");
+                let totalDolar = totalSolicitacao * cotacao;
+                ////console.log(totalDolar);
+                $('#totalSolicitacao').val(totalDolar.toFixed(2));
+            }
+        }
+
+        function deletarItem(index) {
+            //console.log(items.length);
+            items.splice(index, 1);
+            atualizarLista();
+        }
+
+        function atualizarLista() {
+            lista.innerHTML = '';
+            var total = 0;
+            //console.log(items)
+            var idx = 0;
+            for (item of items) {
+                total += (item.ValorUnitario * item.QuantidadeSolicitada);
+                lista.innerHTML += `
+                                                                                                        <div class="col col-md-12 col-lg-12 col-xl-6 col-12 my-2 fadeIn">
+                                                                                                            <div class="box-itens-selected ">
+                                                                                                                   <input type="hidden" name="Solicitacao.Items[${idx}].ProdutoId" value="${item.Id}" />
+                                                                                                                           <input type="hidden" name="Solicitacao.Items[${idx}].Valor" value="${item.ValorUnitario}" />
+                                                                                                                                   <input type="hidden" name="Solicitacao.Items[${idx}].QuantidadeSolicitada" value="${item.QuantidadeSolicitada}" />
+                                                                                                                                   <input type="hidden" name="Solicitacao.Items[${idx}].Produto.Name" value="${item.Name}" />
+                                                                                                                    <p>
+                                                                                                                        <b>Item: </b> ${item.Name} -
+                                                                                                                            <b>Qtd: </b>${item.QuantidadeSolicitada} -
+                                                                                                                                <b>Custo:</b><span>${ (item.ValorUnitario * item.QuantidadeSolicitada).toFixed(2) } </span>
+                                                                                                                    </p>
+                                                                                                                <span class="btn-delete">
+                                                                                                                    <svg width="18" height="20" viewBox="0 0 18 20" fill="none"
+                                                                                                                        xmlns="http://www.w3.org/2000/svg">
+                                                                                                                        <path
+                                                                                                                            d="M1 4.5C0.447715 4.5 0 4.94772 0 5.5C0 6.05228 0.447715 6.5 1 6.5L1 4.5ZM17 6.5C17.5523 6.5 18 6.05228 18 5.5C18 4.94772 17.5523 4.5 17 4.5V6.5ZM6 16.5C6 17.0523 6.44772 17.5 7 17.5C7.55228 17.5 8 17.0523 8 16.5H6ZM8 9C8 8.44772 7.55228 8 7 8C6.44772 8 6 8.44772 6 9H8ZM10 16.5C10 17.0523 10.4477 17.5 11 17.5C11.5523 17.5 12 17.0523 12 16.5H10ZM12 9C12 8.44772 11.5523 8 11 8C10.4477 8 10 8.44772 10 9H12ZM2.5 5.5L2.5 17H4.5L4.5 5.5L2.5 5.5ZM5.5 20L12.5 20V18L5.5 18V20ZM15.5 17L15.5 5.5L13.5 5.5L13.5 17H15.5ZM3.5 4.5H1L1 6.5H3.5L3.5 4.5ZM14.5 6.5L17 6.5V4.5L14.5 4.5V6.5ZM5 4.5H3.5L3.5 6.5L5 6.5V4.5ZM6 5.5L6 3L4 3L4 5.5H6ZM7 2L11 2V0L7 0V2ZM14.5 4.5H13V6.5H14.5V4.5ZM13 4.5L5 4.5V6.5L13 6.5V4.5ZM12 3V5.5H14V3H12ZM8 16.5L8 9H6L6 16.5H8ZM12 16.5V9H10V16.5H12ZM11 2C11.5523 2 12 2.44772 12 3H14C14 1.34315 12.6569 0 11 0V2ZM6 3C6 2.44772 6.44772 2 7 2V0C5.34315 0 4 1.34315 4 3L6 3ZM12.5 20C14.1569 20 15.5 18.6569 15.5 17H13.5C13.5 17.5523 13.0523 18 12.5 18V20ZM2.5 17C2.5 18.6569 3.84315 20 5.5 20V18C4.94772 18 4.5 17.5523 4.5 17H2.5Z"
+                                                                                                                            fill="#676D85" />
+                                                                                                                    </svg>
+                                                                                                                </span>
+                                                                                                            </div>
+                                                                                                        </div>`
+                idx++;
+            }
+
+
+            //const cotacao = elementCotacao ? elementCotacao.value : 1;
+            ////console.log(cotacao);
+            //totalSolicitacao.value = (total  @(produtoTipo.HabilitaValoresDolar ? "* cotacao" : "")).toFixed(2);
+            atualizaTotalSolicitacao(total);
+
+            //console.log(total)
+            refreshDelete();
+        }
+
+        function atualizaTotalSolicitacao(total){
+            const cotacao = elementCotacao ? elementCotacao.value : 1;
+            //console.log(cotacao);
+            totalSolicitacao.value = ((total  @(produtoTipo.HabilitaValoresDolar ? "* cotacao" : "")) * 1.0).toFixed(2);
+       }
+
+        function refreshDelete() {
+            btnDelete = document.querySelectorAll('.btn-delete')
+            btnDelete.forEach((btn, index) => {
+                btn.addEventListener("click", (e) => {
+                    deletarItem(index);
+                    e.stopPropagation();
+                })
+            })
+        }
+
+        function onSelectChange() {
+
+            
+            const produto = produtos.find(p => p.id === parseInt(select.options[select.selectedIndex].value));
+
+            const valorUnitarioItem = produto.valor;
+            //valorMedio.value = formatter.format(valorUnitario);
+            valorUnitario.value = valorUnitarioItem.toFixed(2);// formatter.format(valorUnitarioItem);
+            labelQtd.innerText = "Quantidade " + (produto.unidade ? "(" + produto.unidade.toUpperCase() + ")" : "");
+
+            valorUnitario.readOnly = valorUnitario.value > 0;
+
+            
+            if (!prodTipo.calcularDiarias && !prodTipo.permitirApenasUmItem)
+            {
+                quantidade.value = 1;
+            }
+            
+
+            calcularTotal();
+        }
+
+
+        setTimeout(() => {
+            if (!prodTipo.permitirApenasUmItem || valorUnitario.value <= 0 )
+            {
+            onSelectChange();
+            }
+        }, 100);
+
+        function setMinDataFinal(nomeCampo){
+            const dtinicio = document.getElementById(nomeCampo +"_inicio");
+            const dtifim = document.getElementById(nomeCampo + "_fim");
+            dtifim.setAttribute("min", dtinicio.value);
+
+
+        }
+        function setMaxDataInicial(nomeCampo) {
+            const dtinicio = document.getElementById(nomeCampo + "_inicio");
+            const dtifim = document.getElementById(nomeCampo + "_fim");
+        
+             dtinicio.setAttribute("max",dtifim.value)
+
+        }
+
+        function periodoTexto(nomeCampo) {
+
+             //POG - calcular quantidade de diárias
+             if (prodTipo.calcularDiarias) 
+             {
+                var data1 = new Date(document.getElementById(nomeCampo + "_inicio").value);
+                var data2 = new Date(document.getElementById(nomeCampo + "_fim").value);
+                var xdtinicio = new Date(document.getElementById(nomeCampo + "_inicio").value);
+                var xdtfim = new Date(document.getElementById(nomeCampo + "_fim").value);
+
+                data1.setHours(0, 0, 0, 0);
+                data2.setHours(0, 0, 0, 0);
+                var diferencaMilissegundos = Math.abs(data2 - data1);
+                var diferencaDias = Math.ceil(diferencaMilissegundos / (1000 * 60 * 60 * 24));
+
+
+                const diffInMs = (xdtfim - xdtinicio);
+                var diferencaHoras = diffInMs / (1000 * 60 * 60);
+                
+                if (diferencaDias <= 0)
+                 {
+                     if (diferencaHoras >= 6)
+                            quantidade.value = 0.5;
+                    else
+                            quantidade.value = 0;
+                 }
+                else{
+                    if (xdtfim.getHours() >= 12) 
+                    {
+                        quantidade.value = (diferencaDias + 0.5);
+                    }
+                    else
+                    {
+                        quantidade.value = diferencaDias;
+                    }
+                }
+
+                calcularTotal();
+
+             }
+        }
+
+    </script>
+}

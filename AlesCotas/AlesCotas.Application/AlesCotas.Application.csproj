@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Servicos\MailSenderService.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="11.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
+    <PackageReference Include="Npgsql" Version="7.0.2" />
+    <PackageReference Include="System.DirectoryServices" Version="6.0.1" />
+    <PackageReference Include="System.DirectoryServices.AccountManagement" Version="6.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AlesCotas.Domain\AlesCotas.Domain.csproj" />
+    <ProjectReference Include="..\AlesCotas.Infra.CrossCutting.Utils\AlesCotas.Infra.CrossCutting.Utils.csproj" />
+    <ProjectReference Include="..\AlesCotas.Infra.Data\AlesCotas.Infra.Data.csproj" />
+  </ItemGroup>
+
+</Project>

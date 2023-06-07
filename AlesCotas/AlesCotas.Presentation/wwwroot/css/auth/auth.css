@@ -1,0 +1,190 @@
+
+section{
+    width: 100%;
+    height: 100vh;
+}
+
+section .box-all{
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+section .box-all .box-form{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 56px;
+    background-color: white;
+    box-shadow: 0px 16px 32px rgba(124, 129, 152, 0.08);
+    border-radius: 8px;
+    max-width: 60%;
+    position: relative;
+}
+
+section .box-all .box-form .box-title{
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+}
+section .box-all .box-form .box-content{
+    width:100%;
+    height:100%;
+    display:flex;
+    flex-direction:row;
+    align-items: center;
+    justify-content:space-between
+}
+
+section .box-all .box-form .box-content .col-form{
+    width:100%;
+    height:100% ;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between
+}
+
+
+
+section .box-all .box-form .box-content .col-img {
+    display:flex;
+    flex-direction:row;
+    justify-content:flex-end;
+    width:100%
+ }
+
+ @media only screen and (max-width: 1500px) {
+    section .box-all .box-form .box-content .col-img img {
+        width:100%;
+     }
+  }
+
+ label{
+    margin-top: 20px;
+ }
+
+section .box-all .box-form .box-content .col-form .box-btn {
+    margin-top: 20px;
+    width: 100%
+}
+section .box-all .box-form .box-content .col-form .box-btn button {
+    width: 100%
+}
+
+.box-dots-top{
+    position: fixed;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    z-index: -1;
+}
+.box-dots-top span{
+    height: 25px;
+    width: 25px;
+    background-color: var(--primary-color);
+    border-radius: 50%;
+    margin: 0 30px 30px 0;
+    display: inline-block;
+    opacity: 0.1;
+}
+.box-dots-bottom{
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    z-index: -1;
+}
+.box-dots-bottom span{
+    height: 25px;
+    width: 25px;
+    background-color: var(--primary-color);
+    border-radius: 50%;
+    margin: 0 0 30px 30px;
+    display: inline-block;
+    opacity: 0.1;
+}
+
+
+.small-box-dots{
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    top: -55px;
+    right: -50px;
+    z-index: 5;
+}
+.small-box-dots span{
+    height: 8px;
+    width: 8px;
+    background-color: var(--primary-color);
+    border-radius: 50%;
+    margin: 0 9.6px 9.6px 0;
+    display: inline-block;
+    opacity: 1;
+}
+
+
+.box-forgot {
+    width:100%;
+    display:flex;
+    flex-direction:row;
+    justify-content:flex-end;
+    padding-top: 15px;
+}
+
+.box-forgot  a{
+   color: var(--primary-color) ;
+   text-decoration: none;
+   transition: all 0.3s;
+}
+
+.box-forgot  a:hover{
+    text-decoration: underline;
+ }
+
+ .input-login{
+    position: relative;
+ }
+ .input-login input{
+    position: relative;
+    padding-left: 37px;
+ }
+ .input-login img{
+    position: absolute;
+    top: 48px;
+    left: 11px;
+ }
+
+ .input-login-send{
+    position: relative;
+ }
+ .input-login-send input{
+    position: relative;
+    padding-left: 37px;
+ }
+ .input-login-send img{
+    position: absolute;
+    top: 54px;
+    left: 11px;
+ }
+
+ @media only screen and (max-width: 980px) {
+    
+  section .box-all .box-form .box-content .col-img {
+        width:0%
+    }
+    section .box-all .box-form .box-content .col-img{
+        display: none;
+     }
+     section .box-all .box-form{
+     overflow-x: hidden;
+      padding: 15px;
+      
+      max-width: 90%;
+  }
+  }

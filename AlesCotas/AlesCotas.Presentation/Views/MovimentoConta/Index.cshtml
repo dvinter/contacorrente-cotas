@@ -1,0 +1,113 @@
+﻿@using AlesCotas.Application.Classes
+@using AlesCotas.Application.Dto
+@using AlesCotas.Application.Filter.Base
+@model ListaPaginada<MovimentoContaDto>
+
+
+@{
+    ViewData["Title"] = "Lista de Movimentação de Contas";
+    BaseEntityFilter filtro = ViewBag.filtro;
+}
+
+
+<section class="section-table">
+    <div class="box-title">
+        <div class="back-btn">
+            @*<button onclick="changePage('Gabinetes','Gabinetes')"><img src="~/imgs/arrow.svg" alt="" srcset=""></button>*@
+            <button type="button" class="btn btn-primary" onclick="location.href='@Url.Action("Index", "Admin")'"><img src="~/imgs/arrow.svg" alt="" srcset=""></button>
+            <h4>Histórico de Movimento de Contas</h4>
+        </div>
+
+        <div class="box-btn-to-edit">
+            <button type="button" class="btn btn-primary" onclick="location.href='@Url.Action("New")'">Novo Item de Ajuste</button>
+        </div>
+    </div>
+    <span class="line"></span>
+    <div class="box-form">
+        <div class="box-form-content">
+            <div class="box-content-title mb-3">
+                <div class="box-text mb-3">
+                    <img src="~/imgs/user-icon.svg" alt="">
+                    <h4>Lista de Movimentação de Contas</h4>
+                </div>
+                <form asp-action="Index" class="w-100 ">
+                    <div class="row align-items-end">
+                        <div class="form-group mb-3 col-12 col-md-12 col-lg-7">
+                            <label for="inputEmail4">Filtro</label>
+                            <input type="text" class="form-control  " id="inputEmail4" asp-for="@filtro.FilterText" name="FilterText"
+                                   placeholder="Digite para pesquisar">
+                        </div>
+                        <div class="col-12 col-md-12 col-lg-2 mb-3">
+                            <button class="btn btn-primary w-100">Buscar</button>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+            <div class="box-table">
+                <div style="margin-bottom: 1rem;" class="table-responsive ">
+                    <table class="table table-striped  table-hove align-middle ">
+                        <thead>
+                            <tr>
+                                <th scope="col">Nome </th>
+                                <th scope="col">Tipo</th>
+                                <th scope="col">Gabinete</th>
+                                <th scope="col">Valor</th>
+                                <th scope="col">Data Movimento</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>@Html.DisplayFor(modelItem => item.Descricao)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.Tipo)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.Gabinete.Name)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.Valor)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.DataMovimento)</td>
+                                    <td style="width:80px ;">
+                                        <div class="btns-table-action">
+                                            <button class="btn-edit">
+                                                <a asp-action="Edit" asp-route-id="@item.Id">
+                                                    <img src="~/imgs/edit.svg" alt="">
+                                                </a>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="footer-table">
+                    <div>
+                        <p>Totais de Gabinetes: @Model.Count de @Model.TotalRegistros</p>
+                    </div>
+                    <nav aria-label="Page navigation example">
+                        <ul class="pagination">
+
+                            <li class="page-item @(Model.TemAnterior? "" : "disabled")">
+                                <a class="page-link" asp-route-filter.FilterText="@filtro.FilterText" asp-route-filter.Status="@filtro.Status" asp-route-filter.PageNumber=@(Model.PaginaAtual-1) aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+
+                            @for (var i = 1; i <= Model.TotalPaginas; i++)
+                            {
+                                <li class="page-item @(Model.PaginaAtual == i ? "active" : "")">
+                                    <a class="page-link" asp-route-filter.FilterText="@filtro.FilterText" asp-route-filter.Status="@filtro.Status" asp-route-filter.PageNumber=@i>@(i)</a>
+                                </li>
+                            }
+
+                            <li class="page-item @(Model.TemProxima? "" : "disabled")">
+                                <a class="page-link" asp-route-filter.FilterText="@filtro.FilterText" asp-route-filter.Status="@filtro.Status" asp-route-filter.PageNumber=@(Model.PaginaAtual+1) aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

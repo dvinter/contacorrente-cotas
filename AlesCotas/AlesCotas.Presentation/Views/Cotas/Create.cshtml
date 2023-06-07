@@ -1,0 +1,83 @@
+﻿@using AlesCotas.Application.Dto
+@using AlesCotas.Domain.Entities
+@using AlesCotas.Domain.Enum
+@using AlesCotas.Infra.CrossCutting.Utils.Extensions
+@model Cota
+@{
+    bool editMode = Model?.Id > 0;
+    DateTime minDate = ViewBag.minDate;
+    Model.DataInicio = Model.DataInicio == DateTime.MinValue ? minDate : Model.DataInicio;
+    ViewData["Title"] = (editMode ? "Editar" : "Nova") + " Cota Parlamentar";
+}
+
+<section id="subitemcreate">
+    <div class="back-btn">
+        <button type="button" onclick="location.href='@Url.Action("Index")'"><img src="~/imgs/arrow.svg" alt="" srcset=""></button>
+        <h4>@ViewData["Title"]</h4>
+    </div>
+    <span class="line"></span>
+    <div class="box-form">
+        <div class="box-form-content">
+            <div class="col-one">
+                <form asp-action="Save">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" asp-for="Id" />
+                    <div class="form-group mb-3 mt-4">
+                        <label asp-for="Lei">Lei *</label>
+                        <input type="text" asp-for="Lei" class="form-control" placeholder="Digite o nome do item">
+                        <span asp-validation-for="Lei" class="text-danger"></span>
+                    </div>
+                    <div class="form-group mb-3 mt-4">
+                        <label asp-for="DataInicio">Data Ínicio (Referência)</label>
+                        <input type="date" asp-for="DataInicio" class="form-control" min="@minDate.ToString("yyyy-MM-dd")">
+                        <span asp-validation-for="DataInicio" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="form-group mb-3">
+                        <label asp-for="Valor">Valor</label>
+                        <input asp-for="Valor" type="number" step="0.01" class="form-control"
+                               placeholder="Digite o valor em R$">
+                        <span asp-validation-for="Valor" class="text-danger"></span>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="inputEmail4">Permitir Adiantamento Até</label>
+                        <select class="form-select" aria-label="Filtro Gabinete" asp-for="MesLimiteAdiantamento">
+                            <option value="">Não permitir adiantamento</option>
+                            <option value="2">Fevereiro</option>
+                            <option value="3">Março</option>
+                            <option value="4">Abril</option>
+                            <option value="5">Maio</option>
+                            <option value="6">Junho</option>
+                            <option value="7">Julho</option>
+                            <option value="8">Agosto</option>
+                            <option value="9">Setembro</option>
+                            <option value="10">Outubro</option>
+                            <option value="11">Novembro</option>
+                            <option value="12">Dezembro</option>
+
+                        </select>
+                    </div>
+                    <div class="form-group mb-4">
+                        <label for="inputEmail4">Descrição</label>
+                        <textarea placeholder="Adicione uma descrição" asp-for="Descricao" class="form-control" cols="30"
+                                  rows="5"></textarea>
+                        <span asp-validation-for="Descricao" class="text-danger"></span>
+                    </div>
+                    <hr />
+
+                    <div class="btn-request-form pt-4">
+                        <button type="submit" class="btn btn-primary">@(editMode ? "Salvar" : "Cadastrar")</button>
+                        <button onclick="location.href='@Url.Action("Index")'" type="button" class="btn btn-primary btn-primary-outline">Voltar</button>
+                    </div>
+                </form>
+            </div>
+            <div class="col-two">
+                <img src="~/imgs/form-fuel.svg" alt="">
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+
+</script>

@@ -1,0 +1,81 @@
+#userForms {
+    width: 100%;
+  }
+  
+  #userForms .box-form {
+    margin-top: 22px;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  #userForms .box-form .box-form-content {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 56px;
+    background-color: white;
+    box-shadow: 0px 16px 32px rgba(124, 129, 152, 0.08);
+    border-radius: 8px;
+    position: relative;
+    width: 90%;
+  }
+  
+  #userForms .box-form .box-form-content .col-one {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  
+  #userForms .box-form .box-form-content .col-one .btn-request-form {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+  }
+  
+  #userForms .box-form .box-form-content .col-one .btn-request-form button {
+    width: 100%;
+  }
+  
+  #userForms
+    .box-form
+    .box-form-content
+    .col-one
+    .btn-request-form
+    button:nth-child(1) {
+    margin-right: 10px;
+    width: 100%;
+  }
+  
+  #userForms
+    .box-form
+    .box-form-content
+    .col-one
+    .btn-request-form
+    button:nth-child(2) {
+    margin-left: 10px;
+    width: 100%;
+  }
+  
+  
+  
+  
+    #userForms form{
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+  
+    @media only screen and (max-width: 992px) {
+       #userForms .box-form .box-form-content{
+       
+        padding: 15px;
+        
+        width: 100%;
+    }
+    }

@@ -1,0 +1,23 @@
+﻿@page
+@model AccessDeniedModel
+@{
+    ViewData["Title"] = "Acesso negado";
+    Layout = "~/Views/Shared/Auth.cshtml";
+}
+
+<header>
+    <h1 class="text-danger">@ViewData["Title"]</h1>
+    <p class="text-danger">Você não tem permissão para acessar este recurso.</p>
+
+    <div class="w-100 mt-2">
+        <button class="btn btn-primary w-100" onclick="backBtnAccessDenied()">Voltar</button>
+    </div>
+</header>
+
+<script type="text/javascript">
+
+    function backBtnAccessDenied() {
+        // window.history.back();
+        window.location.replace('/');
+    }
+</script>
